@@ -1,0 +1,39 @@
+file_identifier "X3TH";
+
+file_extension "x3th";
+
+namespace Reprodyne;
+
+table Indeterminate
+{
+	frameId: int;
+	invariant: double;
+}
+
+table CallEntry
+{
+	frameId: int;
+	call:string;
+}
+
+table MinorScopeMap
+{
+	id:string (key);
+
+	tape: [Indeterminate];
+	callTape: [CallEntry];
+}
+
+table MajorScope
+{
+	indeterminateTape: [MinorScopeMap];
+}
+
+table PlayHistory
+{
+	scopeTape:[MajorScope];
+
+	//Need playback history...
+}
+
+root_type PlayHistory;
