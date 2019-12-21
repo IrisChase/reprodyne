@@ -169,7 +169,7 @@ void reprodyne_record()
 { init(Mode::Record); }
 
 
-void reprodyne_save(const std::string path)
+void reprodyne_save(const char* path)
 {
     if(readMode() == Mode::Play)
     {
@@ -213,7 +213,7 @@ void reprodyne_save(const std::string path)
     file.write(reinterpret_cast<char*>(builder.GetBufferPointer()), builder.GetSize());
 }
 
-void reprodyne_play(const std::string path)
+void reprodyne_play(const char* path)
 {
     init(Mode::Play);
 
@@ -236,8 +236,14 @@ void reprodyne_open_scope(void* ptr)
     scopePtrToOrdinalMap[ptr] = playRecord.tape.size() - 1;
 }
 
+void reprodyne_mark_frame()
+{
+    if(!frameCounter) frameCounter = 0;
+    else ++(*frameCounter);
+}
+
 double reprodyne_intercept_indeterminate(void* scopePtr,
-                                      const std::string scopeKey,
+                                      const char* scopeKey,
                                       const double indeterminate)
 {
     if(readMode() == Mode::Record)
@@ -258,14 +264,7 @@ double reprodyne_intercept_indeterminate(void* scopePtr,
     std::terminate();
 }
 
-void reprodyne_mark_frame()
-{
-    if(!frameCounter) frameCounter = 0;
-    else ++(*frameCounter);
-}
-
-
-void reprodyne_serialize_call(void* scope, const std::string subScopeKey, const std::string call)
+void reprodyne_serialize_call(void* scope, const char* subScopeKey, const char* call)
 {
 
 }
