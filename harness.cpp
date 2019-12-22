@@ -6,40 +6,41 @@
 #include <iostream>
 #include <assert.h>
 
+//#include "zlib.h"
+
 #include "schema_generated.h"
+#include "user-include/reprodyne.h"
 
 #include "lexcompare.h"
+
+static void reprodyne_default_playback_failure_handler(const char* msg);
+
+Reprodyne_playback_failure_handler playbackFailureHandler = &reprodyne_default_playback_failure_handler;
 
 
 std::map<void*, int> scopePtrToOrdinalMap;
 std::optional<int> frameCounter;
 std::vector<unsigned char> loadedBuffer;
 
+std::string jumpSafeString;
+
 flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
 
-static int lastFrameId()
+
+typedef std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> LiveIndeterminateTape;
+typedef std::vector<flatbuffers::Offset<reprodyne::CallEntry>> LiveCallTape;
+
+struct LiveKeyedScopeEntry
 {
-    if(!frameCounter)
-    {
-        std::cerr << "Reprodyne ERROR: Call to intercept before reprodyne_mark_frame() is forbidden."
-                  << std::endl << std::flush;
-        std::terminate();
-    }
-
-    return *frameCounter;
-}
-
-typedef std::vector<flatbuffers::Offset<Reprodyne::Indeterminate>> IndeterminateTape;
-typedef std::map<std::string, IndeterminateTape> SubScopeMap;
-typedef std::vector<SubScopeMap> OrdinalScopeTape;
-
-struct PlayRecord
-{
-    OrdinalScopeTape tape;
-    //Serialized Calls synced to frameID..
+    LiveIndeterminateTape programTape;
+    LiveCallTape validationTape;
 };
 
-PlayRecord playRecord;
+typedef std::map<std::string, LiveKeyedScopeEntry> LiveKeyedScopeMap;
+typedef std::vector<LiveKeyedScopeMap> LiveOrdinalScopeTape;
+
+
+LiveOrdinalScopeTape liveTape;
 
 struct LastReadKey
 {
@@ -61,80 +62,7 @@ struct LastReadVal
 //      a manual binary search on the flatbuffer vector, and store the offset in LastReadKey
 //      instead of "subscopeKey", but in the spirit of no premature optimization...
 std::map<LastReadKey, LastReadVal> lastRead;
-const Reprodyne::PlayHistory* flatBuffHistory;
-
-static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
-{
-    if(!optionalOffset) //Initialize
-    {
-        if(tapeSize == 0)
-        {
-            std::cerr << "Reprodyne INTERNAL ERROR: Tape empty. Bad Tape?" << std::endl << std::flush;
-            std::terminate();
-        }
-
-        optionalOffset = 0;
-    }
-
-    if(*optionalOffset == tapeSize)
-    {
-        std::cerr << "Reprodyne PLAYBACK FAILURE: Too many reads, tape empty." << std::endl << std::flush;
-        std::terminate();
-    }
-
-    return (*optionalOffset)++;
-
-}
-
-static void assertFrameId(const int frameId, std::function<void()> handler)
-{
-    if(frameId == lastFrameId()) return;
-
-    std::cerr << "Reprodyne PLAYBACK FAILURE: Frame ID Mismatch!" << std::endl << std::flush;
-
-    handler();
-
-    //Program state is prolly fucked anyway...
-    std::terminate();
-}
-
-static double readIndeterminate(void* scope, const std::string subscopeKey)
-{
-    const int ordinalScopeOffset = scopePtrToOrdinalMap[scope];
-
-    //I just don't feel like naming all the intermediates, bite me.
-    const Reprodyne::MinorScopeMap* minorScope =
-            flatBuffHistory->scopeTape()->Get(ordinalScopeOffset)->indeterminateTape()->LookupByKey(subscopeKey.c_str());
-
-    const int currentTapeOffset =
-            readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].programPos, minorScope->tape()->size());
-
-    const Reprodyne::Indeterminate* i = minorScope->tape()->Get(currentTapeOffset);
-
-    assertFrameId(i->frameId(), [&]
-    {
-        std::cerr << "Not all determinates consumed on previous frame." << std::endl
-                  << "Remaining indeterminates: " << minorScope->tape()->size() - currentTapeOffset << std::endl
-                  << "Current frame Id: " << lastFrameId() << std::endl << std::flush;
-    });
-
-    return i->invariant();
-}
-
-static std::string readStoredCall(void* scope, const std::string subscopeKey)
-{
-    const int ordinalScopeOffset = scopePtrToOrdinalMap[scope];
-
-    const Reprodyne::MinorScopeMap* minorScope =
-            flatBuffHistory->scopeTape()->Get(ordinalScopeOffset)->indeterminateTape()->LookupByKey(subscopeKey.c_str());
-
-    const int currentTapeOffset =
-            readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].callPos, minorScope->callTape()->size());
-
-#error Finish meee
-
-}
-
+const reprodyne::TapeContainer* coldTape = nullptr;
 
 enum class Mode
 {
@@ -143,13 +71,83 @@ enum class Mode
 };
 std::optional<Mode> currentMode;
 
+static void reprodyne_default_playback_failure_handler(const char* msg)
+{
+    std::cerr << "Reprodyne PLAYBACK FAILURE: " << msg << std::endl << std::flush;
+    std::terminate();
+}
+
+static void logic_error_die(const std::string specifically = "Generic logic error.")
+{
+    std::cerr << "Reprodyne INTERNAL ERROR: " << specifically << std::endl << std::flush;
+    std::terminate();
+}
+
+
+static int lastFrameId()
+{
+    if(!frameCounter)
+    {
+        logic_error_die("Call to intercept before reprodyne_mark_frame() is forbidden.");
+    }
+
+    return *frameCounter;
+}
+
+static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
+{
+    if(!optionalOffset) //Initialize
+    {
+        if(tapeSize == 0)
+        {
+            playbackFailureHandler("Tape empty. Bad tape?");
+        }
+
+        optionalOffset = 0;
+    }
+
+    if(*optionalOffset == tapeSize)
+    {
+        playbackFailureHandler("Too many reads, tape empty.");
+    }
+
+    return (*optionalOffset)++;
+
+}
+
+static void assertFrameId(const int frameId, const std::string moreSpecifically)
+{
+    if(frameId == lastFrameId()) return;
+
+    jumpSafeString = "Frame ID mismatch!\n";
+    jumpSafeString += moreSpecifically;
+    jumpSafeString += '\n';
+
+    playbackFailureHandler(jumpSafeString.c_str());
+}
+
+static std::string readStoredCall(void* scope, const std::string subscopeKey)
+{
+    const int ordinalScopeOffset = scopePtrToOrdinalMap[scope];
+
+    const reprodyne::KeyedScopeTapeEntry* keyedScope =
+            coldTape->ordinalScopeTape()->Get(ordinalScopeOffset)->keyedScopeTape()->LookupByKey(subscopeKey.c_str());
+
+    const int currentTapeOffset =
+            readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].callPos, keyedScope->programTape()->size());
+
+    const reprodyne::CallEntry* c = keyedScope->validationTape()->Get(currentTapeOffset);
+    
+    assertFrameId(c->frameId(), "Serialized calls out of order!");
+    
+    return c->call()->str();
+}
+
 static Mode readMode()
 {
     if(!currentMode)
     {
-        std::cerr << "Reprodyne ERROR: Mode not set! Initialize Harness with play(x3th_path) or record()!"
-                  << std::endl << std::flush;
-        std::terminate();
+        logic_error_die("Mode not set! Initialize Harness with play(x3th_path) or record()!");
     }
 
     return *currentMode;
@@ -157,19 +155,22 @@ static Mode readMode()
 
 static void init(const Mode theMode)
 {
-    flatBuffHistory = nullptr;
     currentMode = theMode;
 }
 
 extern "C"
 {
 
+void reprodyne_internal_set_playback_failure_handler(Reprodyne_playback_failure_handler handler)
+{
+    playbackFailureHandler = handler; //Not my problem anymore...
+}
 
-void reprodyne_record()
+void reprodyne_internal_record()
 { init(Mode::Record); }
 
 
-void reprodyne_save(const char* path)
+void reprodyne_internal_save(const char* path)
 {
     if(readMode() == Mode::Play)
     {
@@ -180,40 +181,42 @@ void reprodyne_save(const char* path)
 
     std::ofstream file(path, std::ios_base::binary);
 
-    std::vector<flatbuffers::Offset<Reprodyne::MajorScope>> extMajorScope;
+    std::vector<flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry>> extMajorScope;
 
-    for(SubScopeMap& subScopes : playRecord.tape)
+    for(LiveKeyedScopeMap& subScopes : liveTape)
     {
-        std::vector<flatbuffers::Offset<Reprodyne::MinorScopeMap>> minorScopeFlatMap;
+        std::vector<flatbuffers::Offset<reprodyne::KeyedScopeTapeEntry>> minorScopeFlatMap;
 
         for(auto pair : subScopes)
         {
             const std::string key = pair.first;
-            const IndeterminateTape& tape = pair.second;
+            const LiveIndeterminateTape& tape = pair.second.programTape;
+            
+#error WRITE PLAY TAPE TO BUFFEREEEEEEEEE
 
             const auto fbString = builder.CreateString(key);
             const auto fbTape = builder.CreateVector(tape);
-            const auto minorScopeEntry = Reprodyne::CreateMinorScopeMap(builder, fbString, fbTape);
+            const auto minorScopeEntry = reprodyne::CreateKeyedScopeTapeEntry(builder, fbString, fbTape);
 
             minorScopeFlatMap.push_back(minorScopeEntry);
         }
 
         const auto sortedMinorScopeTable = builder.CreateVectorOfSortedTables(&minorScopeFlatMap);
 
-        const auto majorScopeEntry = Reprodyne::CreateMajorScope(builder, sortedMinorScopeTable);
+        const auto majorScopeEntry = reprodyne::CreateOrdinalScopeTapeEntry(builder, sortedMinorScopeTable);
 
         extMajorScope.push_back(majorScopeEntry);
     }
 
     const auto extScopeTape = builder.CreateVector(extMajorScope);
-    const auto extPlayHistory = Reprodyne::CreatePlayHistory(builder, extScopeTape);
+    const auto extPlayHistory = reprodyne::CreateTapeContainer(builder, extScopeTape);
 
     builder.Finish(extPlayHistory);
 
     file.write(reinterpret_cast<char*>(builder.GetBufferPointer()), builder.GetSize());
 }
 
-void reprodyne_play(const char* path)
+void reprodyne_internal_play(const char* path)
 {
     init(Mode::Play);
 
@@ -221,52 +224,101 @@ void reprodyne_play(const char* path)
 
     loadedBuffer = std::vector<unsigned char>(std::istreambuf_iterator(file), {});
 
-    flatBuffHistory = Reprodyne::GetPlayHistory(&loadedBuffer[0]);
+    coldTape = reprodyne::GetTapeContainer(&loadedBuffer[0]);
 }
 
-//If a pointer is reused*, then nothing of note happens.
-//It's fine don't worry about it. The Right Thing is done.
-//
-//(*that is, when a scope is deallocated and you're unfortunate
-//  enough that the pointer gets reassigned. If you call this more than
-//  once for the same object... Don't do that.)
-void reprodyne_open_scope(void* ptr)
+void reprodyne_internal_open_scope(void* ptr)
 {
-    playRecord.tape.emplace_back();
-    scopePtrToOrdinalMap[ptr] = playRecord.tape.size() - 1;
+    liveTape.emplace_back();
+    scopePtrToOrdinalMap[ptr] = liveTape.size() - 1;
 }
 
-void reprodyne_mark_frame()
+void reprodyne_internal_mark_frame()
 {
     if(!frameCounter) frameCounter = 0;
     else ++(*frameCounter);
 }
 
-double reprodyne_intercept_indeterminate(void* scopePtr,
-                                      const char* scopeKey,
-                                      const double indeterminate)
+void reprodyne_internal_write_indeterminate(void* scope, const char* key, double indeterminate)
+{
+    if(!(readMode() == Mode::Record))
+    {
+        std::cerr << "Reprodyne WARNING: write_indeterminate called in non-record mode!" << std::endl;
+        return;
+    }
+
+    auto indeterminateOffset = reprodyne::CreateIndeterminateEntry(builder, indeterminate, lastFrameId());
+    liveTape[scopePtrToOrdinalMap[scope]][key].programTape.push_back(indeterminateOffset);
+}
+
+double reprodyne_internal_read_indeterminate(void* scope, const char* subscopeKey)
+{
+    const int ordinalScopeOffset = scopePtrToOrdinalMap[scope];
+
+    //I just don't feel like naming all the intermediates, bite me.
+    const reprodyne::KeyedScopeTapeEntry* keyedScope =
+            coldTape->ordinalScopeTape()->Get(ordinalScopeOffset)->keyedScopeTape()->LookupByKey(subscopeKey);
+
+    const int currentTapeOffset =
+            readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].programPos, keyedScope->programTape()->size());
+
+    const reprodyne::IndeterminateEntry* i = keyedScope->programTape()->Get(currentTapeOffset);
+
+    assertFrameId(i->frameId(), "Determinates out of order!");
+
+    return i->val();
+}
+
+double reprodyne_internal_intercept_indeterminate(void* scopePtr, const char* scopeKey, const double indeterminate)
 {
     if(readMode() == Mode::Record)
     {
-        auto indeterminateOffset = Reprodyne::CreateIndeterminate(builder,
-                                                                         indeterminate,
-                                                                         lastFrameId());
-
-        playRecord.tape[scopePtrToOrdinalMap[scopePtr]][scopeKey].push_back(indeterminateOffset);
+        reprodyne_internal_write_indeterminate(scopePtr, scopeKey, indeterminate);
         return indeterminate;
     }
     else if(readMode() == Mode::Play)
     {
-        return readIndeterminate(scopePtr, scopeKey);
+        return reprodyne_internal_read_indeterminate(scopePtr, scopeKey);
     }
 
-    std::cerr << "Reprodyne ERROR: Internal logic error." << std::endl << std::flush;
-    std::terminate();
+    logic_error_die();
 }
 
-void reprodyne_serialize_call(void* scope, const char* subScopeKey, const char* call)
+void reprodyne_internal_serialize(void* scope, const char* subScopeKey, const char* call)
 {
+    if(readMode() == Mode::Record)
+    {
+        const std::string cppStringCall = call;
+        auto stringOffset = builder.CreateString(cppStringCall.c_str(), cppStringCall.size());
+        auto callEntryOffset = reprodyne::CreateCallEntry(builder, lastFrameId(), stringOffset);
+        
+        liveTape[scopePtrToOrdinalMap[scope]][subScopeKey].validationTape.push_back(callEntryOffset);
+    }
+    else if(readMode() == Mode::Play)
+    {
+        bool failure = false;
 
+        //This is convoluted because we need to ensure that the destructor for
+        // "storedCall" is invoked before we call the playbackFailureHandler,
+        // which may longjmp back out of here.
+        {
+            const std::string storedCall = readStoredCall(scope, subScopeKey);
+
+            if(storedCall != call)
+            {
+                failure = true;
+                jumpSafeString = "Stored call mismatch! Program produced: \n";
+                jumpSafeString += call;
+                jumpSafeString += "Was expecting: \n";
+                jumpSafeString += storedCall;
+                jumpSafeString += '\n';
+
+            }
+        }
+
+        playbackFailureHandler(jumpSafeString.c_str());
+    }
+    else logic_error_die("Mode corrupt or not set somehow.");
 }
 
 } //extern "C"

@@ -2,38 +2,38 @@ file_identifier "X3TH";
 
 file_extension "x3th";
 
-namespace Reprodyne;
+namespace reprodyne;
 
-table Indeterminate
+table IndeterminateEntry
 {
-	frameId: int;
-	invariant: double;
+    frameId:int;
+    val:double;
 }
 
 table CallEntry
 {
-	frameId: int;
-	call:string;
+    frameId:int;
+    call:string;
 }
 
-table MinorScopeMap
+table KeyedScopeTapeEntry
 {
-	id:string (key);
+    key:string (key);
 
-	tape: [Indeterminate];
-	callTape: [CallEntry];
+    programTape: [IndeterminateEntry];
+    validationTape: [CallEntry];
 }
 
-table MajorScope
+table OrdinalScopeTapeEntry
 {
-	indeterminateTape: [MinorScopeMap];
+    keyedScopeTape: [KeyedScopeTapeEntry];
 }
 
-table PlayHistory
+table TapeContainer
 {
-	scopeTape:[MajorScope];
+    ordinalScopeTape:[OrdinalScopeTapeEntry];
 
-	//Need playback history...
+    //Need playback history...
 }
 
-root_type PlayHistory;
+root_type TapeContainer;
