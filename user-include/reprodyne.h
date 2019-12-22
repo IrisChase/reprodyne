@@ -59,7 +59,7 @@ void reprodyne_internal_serialize(void* scope, const char* key, const char* cere
 
 #else
 
-#define reprodyne_set_playback_failure_handler()
+#define reprodyne_set_playback_failure_handler(handler)
 
 #define reprodyne_mode_play() 0
 #define reprodyne_mode_record() 0

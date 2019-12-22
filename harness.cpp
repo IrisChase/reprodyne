@@ -181,37 +181,43 @@ void reprodyne_internal_save(const char* path)
 
     std::ofstream file(path, std::ios_base::binary);
 
-    std::vector<flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry>> extMajorScope;
+    std::vector<flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry>> ordinalScopeTape;
 
     for(LiveKeyedScopeMap& subScopes : liveTape)
     {
-        std::vector<flatbuffers::Offset<reprodyne::KeyedScopeTapeEntry>> minorScopeFlatMap;
+        std::vector<flatbuffers::Offset<reprodyne::KeyedScopeTapeEntry>> keyedScopeTape;
 
         for(auto pair : subScopes)
         {
             const std::string key = pair.first;
-            const LiveIndeterminateTape& tape = pair.second.programTape;
+            const LiveIndeterminateTape& programTape = pair.second.programTape;
+            const LiveCallTape& callTape = pair.second.validationTape;
             
-#error WRITE PLAY TAPE TO BUFFEREEEEEEEEE
 
             const auto fbString = builder.CreateString(key);
-            const auto fbTape = builder.CreateVector(tape);
-            const auto minorScopeEntry = reprodyne::CreateKeyedScopeTapeEntry(builder, fbString, fbTape);
 
-            minorScopeFlatMap.push_back(minorScopeEntry);
+            const auto fbProgramTape = builder.CreateVector(programTape);
+            const auto fbCallTape = builder.CreateVector(callTape);
+
+            const auto fbKeyedScopeEntry = reprodyne::CreateKeyedScopeTapeEntry(builder,
+                                                                               fbString,
+                                                                               fbProgramTape,
+                                                                               fbCallTape);
+
+            keyedScopeTape.push_back(fbKeyedScopeEntry);
         }
 
-        const auto sortedMinorScopeTable = builder.CreateVectorOfSortedTables(&minorScopeFlatMap);
+        const auto fbKeyedScopeTape = builder.CreateVectorOfSortedTables(&keyedScopeTape);
 
-        const auto majorScopeEntry = reprodyne::CreateOrdinalScopeTapeEntry(builder, sortedMinorScopeTable);
+        const auto fbOrdinalScopeTapeEntry = reprodyne::CreateOrdinalScopeTapeEntry(builder, fbKeyedScopeTape);
 
-        extMajorScope.push_back(majorScopeEntry);
+        ordinalScopeTape.push_back(fbOrdinalScopeTapeEntry);
     }
 
-    const auto extScopeTape = builder.CreateVector(extMajorScope);
-    const auto extPlayHistory = reprodyne::CreateTapeContainer(builder, extScopeTape);
+    const auto fbOrdinalScopeTape = builder.CreateVector(ordinalScopeTape);
+    const auto fbTapeContainer = reprodyne::CreateTapeContainer(builder, fbOrdinalScopeTape);
 
-    builder.Finish(extPlayHistory);
+    builder.Finish(fbTapeContainer);
 
     file.write(reinterpret_cast<char*>(builder.GetBufferPointer()), builder.GetSize());
 }

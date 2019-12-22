@@ -11,26 +11,22 @@ harness.cpp
 )
 
 set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne.h")
-target_include_directories(reprodyne PRIVATE ${FLATBUFFERS_INCLUDE})
 
 find_package(ZLIB REQUIRED)
+find_package(Flatbuffers REQUIRED)
+find_package(Catch2)
 target_link_libraries(reprodyne ZLIB)
 
-add_executable(reprodyne_tests user-include/reprodyne.h tests.cpp)
-target_link_libraries(reprodyne_tests reprodyne)
 
-
-if(NOT DEFINED FLATBUFFERS_INCLUDE)
-    message(WARNING "Include directory for flatbuffers not set! Unless you know what you're doing, "
-                    "use -DFLATBUFFERS_INCLUDE=xxx")
+if(DEFINED Catch2_FOUND)
+    add_executable(reprodyne_tests user-include/reprodyne.h tests.cpp)
+    target_link_libraries(reprodyne_tests reprodyne)
 endif()
 
-if(NOT DEFINED FLATBUFFERS_COMPILER)
-    message(FATAL_ERROR "Path to flatbuffers schema compiler not set! Use -DFLATBUFFERS_COMPILER=/.../flatc")
-endif()
+
 
 add_custom_command(DEPENDS schema.fbs
-                   COMMAND ${FLATBUFFERS_COMPILER} --cpp schema.fbs
+                   COMMAND flatc --cpp schema.fbs
                    OUTPUT schema_generated.h
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
