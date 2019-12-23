@@ -36,8 +36,15 @@ add_custom_command(DEPENDS schema.fbs
 add_custom_target(generated_code DEPENDS schema_generated.h)
 add_dependencies(reprodyne generated_code)
 
-install(TARGETS reprodyne
+install(TARGETS reprodyne EXPORT reprodyne
         ARCHIVE
-            DESTINATION lib
+            DESTINATION lib/reprodyne1
         PUBLIC_HEADER
-            DESTINATION include/reprodyne)
+            DESTINATION include/reprodyne1)
+
+#Why can't I just add this to the above? It's a   ~ m y s t e r y ~
+install(FILES reprodyne-config.cmake DESTINATION lib/cmake/reprodyne)
+
+#Why can't I just add this to the above? It's a   ~ m y s t e r y ~
+install(EXPORT reprodyne DESTINATION lib/cmake/reprodyne)
+
