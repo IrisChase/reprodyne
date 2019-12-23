@@ -15,7 +15,7 @@ set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne
 find_package(ZLIB REQUIRED)
 find_package(Flatbuffers REQUIRED)
 find_package(Catch2)
-target_link_libraries(reprodyne ZLIB)
+target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
 
 
 if(DEFINED Catch2_FOUND)
