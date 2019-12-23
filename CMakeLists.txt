@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(reprodyne
 user-include/reprodyne.h
+schema_generated.h
 harness.cpp
 )
 
