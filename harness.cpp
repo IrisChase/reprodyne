@@ -339,7 +339,7 @@ void reprodyne_internal_serialize(void* scope, const char* subScopeKey, const ch
             }
         }
 
-        playbackFailureHandler(jumpSafeString.c_str());
+        if(failure) playbackFailureHandler(jumpSafeString.c_str());
     }
     else logic_error_die("Mode corrupt or not set somehow.");
 }
