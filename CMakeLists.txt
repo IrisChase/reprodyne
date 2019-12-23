@@ -25,9 +25,8 @@ if(DEFINED Catch2_FOUND)
 endif()
 
 
-
 add_custom_command(DEPENDS schema.fbs
-                   COMMAND flatc --cpp schema.fbs
+                   COMMAND flatbuffers::flatc --cpp schema.fbs
                    OUTPUT schema_generated.h
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
