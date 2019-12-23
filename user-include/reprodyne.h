@@ -10,6 +10,8 @@ typedef void(*Reprodyne_playback_failure_handler)(const char* msg);
 extern "C"
 {
 
+void reprodyne_internal_reset();
+
 void reprodyne_internal_set_playback_failure_handler(Reprodyne_playback_failure_handler handler);
 
 int reprodyne_internal_mode_play();
@@ -32,6 +34,8 @@ void reprodyne_internal_serialize(void* scope, const char* key, const char* cere
 
 //If you believe lower case macros are evil... I'm sorry.
 //I just... I can't yell this much...
+
+#define reprodyne_reset() reprodyne_internal_reset()
 
 #define reprodyne_set_playback_failure_handler(handler) reprodyne_internal_set_playback_failure_handler(handler)
 
@@ -58,6 +62,8 @@ void reprodyne_internal_serialize(void* scope, const char* key, const char* cere
 #define reprodyne_serialize(scope, key, call) reprodyne_internal_serialize(scope, key, call)
 
 #else
+
+#define reprodyne_reset()
 
 #define reprodyne_set_playback_failure_handler(handler)
 

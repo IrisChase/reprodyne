@@ -71,6 +71,7 @@ enum class Mode
 };
 std::optional<Mode> currentMode;
 
+
 static void reprodyne_default_playback_failure_handler(const char* msg)
 {
     std::cerr << "Reprodyne PLAYBACK FAILURE: " << msg << std::endl << std::flush;
@@ -115,7 +116,7 @@ static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
 
 }
 
-static void assertFrameId(const int frameId, const std::string moreSpecifically)
+static void assertFrameId(const int frameId, const char* moreSpecifically)
 {
     if(frameId == lastFrameId()) return;
 
@@ -155,11 +156,28 @@ static Mode readMode()
 
 static void init(const Mode theMode)
 {
+    reprodyne_internal_reset();
     currentMode = theMode;
 }
 
 extern "C"
 {
+
+void reprodyne_internal_reset()
+{
+    scopePtrToOrdinalMap.clear();
+    frameCounter.reset();
+    jumpSafeString.clear();
+
+    coldTape = nullptr; //Looks like it's just a fancy shmancy reinterpret_cast'd pointer into our buffer
+    loadedBuffer.clear();
+    builder.Clear();
+
+    liveTape.clear();
+    lastRead.clear();
+
+    currentMode.reset();
+}
 
 void reprodyne_internal_set_playback_failure_handler(Reprodyne_playback_failure_handler handler)
 {
@@ -318,7 +336,6 @@ void reprodyne_internal_serialize(void* scope, const char* subScopeKey, const ch
                 jumpSafeString += "Was expecting: \n";
                 jumpSafeString += storedCall;
                 jumpSafeString += '\n';
-
             }
         }
 
