@@ -3,8 +3,6 @@
 
 typedef void(*Reprodyne_playback_failure_handler)(const char* msg);
 
-#define REPRODYNE_AVAILABLE
-
 #ifdef REPRODYNE_AVAILABLE
 
 extern "C"

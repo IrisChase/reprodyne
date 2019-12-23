@@ -271,7 +271,7 @@ void reprodyne_internal_write_indeterminate(void* scope, const char* key, double
         return;
     }
 
-    auto indeterminateOffset = reprodyne::CreateIndeterminateEntry(builder, indeterminate, lastFrameId());
+    auto indeterminateOffset = reprodyne::CreateIndeterminateEntry(builder, lastFrameId(), indeterminate);
     liveTape[scopePtrToOrdinalMap[scope]][key].programTape.push_back(indeterminateOffset);
 }
 

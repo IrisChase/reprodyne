@@ -12,6 +12,7 @@ harness.cpp
 )
 
 set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne.h")
+target_compile_definitions(reprodyne PRIVATE REPRODYNE_AVAILABLE)
 
 find_package(ZLIB REQUIRED)
 find_package(Flatbuffers REQUIRED)
