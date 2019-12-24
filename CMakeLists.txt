@@ -12,7 +12,7 @@ harness.cpp
 )
 
 set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne.h")
-target_compile_definitions(reprodyne PRIVATE REPRODYNE_AVAILABLE)
+target_compile_definitions(reprodyne PUBLIC REPRODYNE_AVAILABLE)
 
 find_package(ZLIB REQUIRED)
 find_package(Flatbuffers REQUIRED)
@@ -21,7 +21,7 @@ target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
 
 
 if(DEFINED Catch2_FOUND)
-    add_executable(reprodyne_tests user-include/reprodyne.h tests.cpp)
+    add_executable(reprodyne_tests user-include/reprodyne.h tests.cpp catchmain.cpp)
     target_link_libraries(reprodyne_tests reprodyne)
 endif()
 

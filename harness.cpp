@@ -156,14 +156,14 @@ static Mode readMode()
 
 static void init(const Mode theMode)
 {
-    reprodyne_internal_reset();
+    reprodyne_do_not_call_this_function_directly_reset();
     currentMode = theMode;
 }
 
 extern "C"
 {
 
-void reprodyne_internal_reset()
+void reprodyne_do_not_call_this_function_directly_reset()
 {
     scopePtrToOrdinalMap.clear();
     frameCounter.reset();
@@ -179,16 +179,16 @@ void reprodyne_internal_reset()
     currentMode.reset();
 }
 
-void reprodyne_internal_set_playback_failure_handler(Reprodyne_playback_failure_handler handler)
+void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(Reprodyne_playback_failure_handler handler)
 {
     playbackFailureHandler = handler; //Not my problem anymore...
 }
 
-void reprodyne_internal_record()
+void reprodyne_do_not_call_this_function_directly_record()
 { init(Mode::Record); }
 
 
-void reprodyne_internal_save(const char* path)
+void reprodyne_do_not_call_this_function_directly_save(const char* path)
 {
     if(readMode() == Mode::Play)
     {
@@ -240,7 +240,7 @@ void reprodyne_internal_save(const char* path)
     file.write(reinterpret_cast<char*>(builder.GetBufferPointer()), builder.GetSize());
 }
 
-void reprodyne_internal_play(const char* path)
+void reprodyne_do_not_call_this_function_directly_play(const char* path)
 {
     init(Mode::Play);
 
@@ -251,19 +251,19 @@ void reprodyne_internal_play(const char* path)
     coldTape = reprodyne::GetTapeContainer(&loadedBuffer[0]);
 }
 
-void reprodyne_internal_open_scope(void* ptr)
+void reprodyne_do_not_call_this_function_directly_open_scope(void* ptr)
 {
     liveTape.emplace_back();
     scopePtrToOrdinalMap[ptr] = liveTape.size() - 1;
 }
 
-void reprodyne_internal_mark_frame()
+void reprodyne_do_not_call_this_function_directly_mark_frame()
 {
     if(!frameCounter) frameCounter = 0;
     else ++(*frameCounter);
 }
 
-void reprodyne_internal_write_indeterminate(void* scope, const char* key, double indeterminate)
+void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scope, const char* key, double indeterminate)
 {
     if(!(readMode() == Mode::Record))
     {
@@ -275,7 +275,7 @@ void reprodyne_internal_write_indeterminate(void* scope, const char* key, double
     liveTape[scopePtrToOrdinalMap[scope]][key].programTape.push_back(indeterminateOffset);
 }
 
-double reprodyne_internal_read_indeterminate(void* scope, const char* subscopeKey)
+double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* scope, const char* subscopeKey)
 {
     const int ordinalScopeOffset = scopePtrToOrdinalMap[scope];
 
@@ -293,22 +293,22 @@ double reprodyne_internal_read_indeterminate(void* scope, const char* subscopeKe
     return i->val();
 }
 
-double reprodyne_internal_intercept_indeterminate(void* scopePtr, const char* scopeKey, const double indeterminate)
+double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void* scopePtr, const char* scopeKey, const double indeterminate)
 {
     if(readMode() == Mode::Record)
     {
-        reprodyne_internal_write_indeterminate(scopePtr, scopeKey, indeterminate);
+        reprodyne_do_not_call_this_function_directly_write_indeterminate(scopePtr, scopeKey, indeterminate);
         return indeterminate;
     }
     else if(readMode() == Mode::Play)
     {
-        return reprodyne_internal_read_indeterminate(scopePtr, scopeKey);
+        return reprodyne_do_not_call_this_function_directly_read_indeterminate(scopePtr, scopeKey);
     }
 
     logic_error_die();
 }
 
-void reprodyne_internal_serialize(void* scope, const char* subScopeKey, const char* call)
+void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const char* subScopeKey, const char* call)
 {
     if(readMode() == Mode::Record)
     {
