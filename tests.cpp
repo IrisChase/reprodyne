@@ -59,4 +59,20 @@ TEST_CASE("woof")
         reprodyne_mark_frame();
         interceptHelper(&rescope2, "the-wan", wanSetScope2, true);
     }
+    SECTION("Mismatched frame")
+    {
+        reprodyne_mark_frame();
+
+        int rescope2;
+        int rescope1;
+
+        //The actual addresses are in the opposite order now.
+        reprodyne_open_scope(&rescope1);
+        reprodyne_open_scope(&rescope2);
+
+        //This is where the magic happens~
+        interceptHelper(&rescope1, "the-wan", wanSetScope1, true);
+        /*MARK FRAME MISSING*/
+        interceptHelper(&rescope2, "the-wan", wanSetScope2, false);
+    }
 }
