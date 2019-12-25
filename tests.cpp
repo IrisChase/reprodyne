@@ -8,6 +8,12 @@ double time()
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
+std::vector<double> generateList()
+{
+    //Tried this in a lambda but the compiler is too clever for it's own good.
+    return std::initializer_list<double>({time(), time(), time(), time()});
+};
+
 TEST_CASE("woof")
 {
     reprodyne_record();
@@ -33,12 +39,12 @@ TEST_CASE("woof")
     };
 
 
-    const auto wanSetScope1 = {time(), time(), time(), time()};
-    const auto wanSetScope2 = {time(), time(), time(), time()};
+    const auto originalSetScope1 = generateList();
+    const auto originalSetScope2 = generateList();
 
-    interceptHelper(&scope1, "the-wan", wanSetScope1, true);
+    interceptHelper(&scope1, "the-wan", originalSetScope1, true);
     reprodyne_mark_frame();
-    interceptHelper(&scope2, "the-wan", wanSetScope2, true);
+    interceptHelper(&scope2, "the-wan", originalSetScope2, true);
 
     reprodyne_save("reprodyne-test-data.rep");
     reprodyne_play("reprodyne-test-data.rep");
@@ -50,14 +56,19 @@ TEST_CASE("woof")
         int rescope2;
         int rescope1;
 
-        //The actual addresses are in the opposite order now.
+        //These new values are intercepted and replaced with the correct stored value
+        const auto secondSetScope1 = generateList();
+        const auto secondSetScope2 = generateList();
+
+        //The actual addresses are in the opposite order now, but
+        // as long as they are registered to reprodyne in the same order, it's fine.
         reprodyne_open_scope(&rescope1);
         reprodyne_open_scope(&rescope2);
 
         //This is where the magic happens~
-        interceptHelper(&rescope1, "the-wan", wanSetScope1, true);
+        interceptHelper(&rescope1, "the-wan", secondSetScope1, true);
         reprodyne_mark_frame();
-        interceptHelper(&rescope2, "the-wan", wanSetScope2, true);
+        interceptHelper(&rescope2, "the-wan", secondSetScope2, true);
     }
     SECTION("Mismatched frame")
     {
@@ -71,8 +82,8 @@ TEST_CASE("woof")
         reprodyne_open_scope(&rescope2);
 
         //This is where the magic happens~
-        interceptHelper(&rescope1, "the-wan", wanSetScope1, true);
+        interceptHelper(&rescope1, "the-wan", originalSetScope1, true);
         /*MARK FRAME MISSING*/
-        interceptHelper(&rescope2, "the-wan", wanSetScope2, false);
+        interceptHelper(&rescope2, "the-wan", originalSetScope2, false);
     }
 }
