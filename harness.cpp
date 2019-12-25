@@ -6,7 +6,7 @@
 #include <iostream>
 #include <assert.h>
 
-//#include "zlib.h"
+#include <zlib.h>
 
 #include "schema_generated.h"
 #include "user-include/reprodyne.h"

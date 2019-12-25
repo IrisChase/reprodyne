@@ -24,9 +24,9 @@ double time()
 
 std::vector<double> generateList()
 {
-    //Tried this in a lambda but the compiler is too clever for it's own good.
+    //Tried this in a lambda but gcc is too clever for it's own good.
     return std::initializer_list<double>({time(), time(), time(), time()});
-};
+}
 
 TEST_CASE("woof")
 {
@@ -41,14 +41,13 @@ TEST_CASE("woof")
     reprodyne_open_scope(&scope2);
 
 
-    auto interceptHelper = [&](void* scope, std::string key, auto list, const bool correctMode)
+    auto interceptHelper = [&](void* scope, std::string key, auto list, std::vector<double> validationSet)
     {
-        for(auto i : list)
+        for(int i = 0; i != list.size(); ++i)
         {
-            const double rep = reprodyne_intercept_indeterminate(scope, key.c_str(), i);
+            const double rep = reprodyne_intercept_indeterminate(scope, key.c_str(), list[i]);
 
-            if(correctMode) REQUIRE(rep == i);
-            else            REQUIRE(rep != i);
+            if(validationSet.size()) REQUIRE(validationSet[i] == rep);
         }
     };
 
@@ -56,9 +55,10 @@ TEST_CASE("woof")
     const auto originalSetScope1 = generateList();
     const auto originalSetScope2 = generateList();
 
-    interceptHelper(&scope1, "the-wan", originalSetScope1, true);
+    //Consequently, this tests that the original values are returned
+    interceptHelper(&scope1, "the-wan", originalSetScope1, originalSetScope1);
     reprodyne_mark_frame();
-    interceptHelper(&scope2, "the-wan", originalSetScope2, true);
+    interceptHelper(&scope2, "the-wan", originalSetScope2, originalSetScope2);
 
     reprodyne_save("reprodyne-test-data.rep");
     reprodyne_play("reprodyne-test-data.rep");
@@ -70,53 +70,39 @@ TEST_CASE("woof")
         int rescope2;
         int rescope1;
 
-
         //The actual addresses are in the opposite order now, but
         // as long as they are registered to reprodyne in the same order, it's fine.
         reprodyne_open_scope(&rescope1);
         reprodyne_open_scope(&rescope2);
 
-        SECTION("Intercept supplies original indeterminates")
-        {
-            interceptHelper(&rescope1, "the-wan", originalSetScope1, true);
-            reprodyne_mark_frame();
-            interceptHelper(&rescope2, "the-wan", originalSetScope2, true);
-        }
-        SECTION("Discard supplied indeterminates")
+        SECTION("Discard supplied indeterminates, returning originals")
         {
             //These new values are intercepted and replaced
             const auto secondSetScope1 = generateList();
             const auto secondSetScope2 = generateList();
 
-            interceptHelper(&rescope1, "the-wan", secondSetScope1, false);
+            interceptHelper(&rescope1, "the-wan", secondSetScope1, originalSetScope1);
             reprodyne_mark_frame();
-            interceptHelper(&rescope2, "the-wan", secondSetScope2, false);
+            interceptHelper(&rescope2, "the-wan", secondSetScope2, originalSetScope2);
         }
     }
     SECTION("Mismatched frame")
     {
         reprodyne_mark_frame();
+        reprodyne_open_scope(&scope1);
+        reprodyne_open_scope(&scope2);
 
-        int rescope2;
-        int rescope1;
-
-        //The actual addresses are in the opposite order now.
-        reprodyne_open_scope(&rescope1);
-        reprodyne_open_scope(&rescope2);
-
-        //This is where the magic happens~
-        interceptHelper(&rescope1, "the-wan", originalSetScope1, true);
+        interceptHelper(&scope1, "the-wan", originalSetScope1, {});
 
         /*MARK FRAME MISSING*/
 
-
         bool success = false;
-
         reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
+
         try
         {
-            interceptHelper(&rescope2, "the-wan", originalSetScope2, false); //This call should fail
-            FAIL("Intercept didn't fail with mismatched frame id");
+            interceptHelper(&scope2, "the-wan", originalSetScope2, {});
+            FAIL("Intercept didn't fail with mismatched frame calls");
         }
         catch(const OopsieWhoopsie oops)
         {
@@ -124,6 +110,6 @@ TEST_CASE("woof")
             success = true;
         }
 
-        REQUIRE(success);
+        REQUIRE(success); //, failure is NOT an option.
     }
 }
