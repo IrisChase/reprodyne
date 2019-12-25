@@ -13,7 +13,7 @@
 
 #include "lexcompare.h"
 
-static void reprodyne_default_playback_failure_handler(const char* msg);
+static void reprodyne_default_playback_failure_handler(const int code, const char* msg);
 
 Reprodyne_playback_failure_handler playbackFailureHandler = &reprodyne_default_playback_failure_handler;
 
@@ -72,7 +72,7 @@ enum class Mode
 std::optional<Mode> currentMode;
 
 
-static void reprodyne_default_playback_failure_handler(const char* msg)
+static void reprodyne_default_playback_failure_handler(const int code, const char* msg)
 {
     std::cerr << "Reprodyne PLAYBACK FAILURE: " << msg << std::endl << std::flush;
     std::terminate();
@@ -101,7 +101,7 @@ static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
     {
         if(tapeSize == 0)
         {
-            playbackFailureHandler("Tape empty. Bad tape?");
+            playbackFailureHandler(REPRODYNE_STAT_EMPTY_TAPE, "Tape empty. Bad tape?");
         }
 
         optionalOffset = 0;
@@ -109,7 +109,7 @@ static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
 
     if(*optionalOffset == tapeSize)
     {
-        playbackFailureHandler("Too many reads, tape empty.");
+        playbackFailureHandler(REPRODYNE_STAT_TAPE_PAST_END, "Too many reads, tape empty.");
     }
 
     return (*optionalOffset)++;
@@ -124,7 +124,7 @@ static void assertFrameId(const int frameId, const char* moreSpecifically)
     jumpSafeString += moreSpecifically;
     jumpSafeString += '\n';
 
-    playbackFailureHandler(jumpSafeString.c_str());
+    playbackFailureHandler(REPRODYNE_STAT_FRAME_MISMATCH, jumpSafeString.c_str());
 }
 
 static std::string readStoredCall(void* scope, const std::string subscopeKey)
@@ -339,7 +339,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
             }
         }
 
-        if(failure) playbackFailureHandler(jumpSafeString.c_str());
+        if(failure) playbackFailureHandler(REPRODYNE_STAT_CALL_MISMATCH, jumpSafeString.c_str());
     }
     else logic_error_die("Mode corrupt or not set somehow.");
 }

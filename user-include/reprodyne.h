@@ -3,9 +3,10 @@
 
 #define REPRODYNE_STAT_FRAME_MISMATCH 10
 #define REPRODYNE_STAT_CALL_MISMATCH  11
+#define REPRODYNE_STAT_EMPTY_TAPE     12
+#define REPRODYNE_STAT_TAPE_PAST_END  13
 
-typedef void(*Reprodyne_playback_failure_handler)(const char* msg);
-
+typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* msg);
 
 #ifdef REPRODYNE_AVAILABLE
 
@@ -36,6 +37,8 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
 
 //If you believe lower case macros are evil... I'm sorry.
 //I just... I can't yell this much...
+
+#define reprodyne_get_msg(code) reprodyne_do_not_call_this_function_directly_get_msg(code)
 
 #define reprodyne_reset() reprodyne_do_not_call_this_function_directly_reset()
 
