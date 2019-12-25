@@ -31,7 +31,6 @@ std::vector<double> generateList()
 TEST_CASE("woof")
 {
     reprodyne_record();
-
     reprodyne_mark_frame();
 
     int scope1; //Only used for their addresses
@@ -60,8 +59,11 @@ TEST_CASE("woof")
     reprodyne_mark_frame();
     interceptHelper(&scope2, "the-wan", originalSetScope2, originalSetScope2);
 
-    reprodyne_save("reprodyne-test-data.rep");
-    reprodyne_play("reprodyne-test-data.rep");
+    {
+        const auto testDataPath = "reprodyne-test-data.rep";
+        reprodyne_save(testDataPath);
+        reprodyne_play(testDataPath); //Automatically re-initializes everything, don't worry~
+    }
 
     SECTION("Correct interception")
     {
