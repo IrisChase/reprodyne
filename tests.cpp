@@ -3,6 +3,20 @@
 
 #include "user-include/reprodyne.h"
 
+
+class OopsieWhoopsie : public std::exception
+{
+public:
+    OopsieWhoopsie(const int code): code(code) {}
+    const int code;
+};
+
+void custom_failure_handler(const int code, const char*)
+{
+    throw OopsieWhoopsie(code);
+}
+
+
 double time()
 {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -49,26 +63,35 @@ TEST_CASE("woof")
     reprodyne_save("reprodyne-test-data.rep");
     reprodyne_play("reprodyne-test-data.rep");
 
-    SECTION("Valid section")
+    SECTION("Correct interception")
     {
         reprodyne_mark_frame();
 
         int rescope2;
         int rescope1;
 
-        //These new values are intercepted and replaced with the correct stored value
-        const auto secondSetScope1 = generateList();
-        const auto secondSetScope2 = generateList();
 
         //The actual addresses are in the opposite order now, but
         // as long as they are registered to reprodyne in the same order, it's fine.
         reprodyne_open_scope(&rescope1);
         reprodyne_open_scope(&rescope2);
 
-        //This is where the magic happens~
-        interceptHelper(&rescope1, "the-wan", secondSetScope1, true);
-        reprodyne_mark_frame();
-        interceptHelper(&rescope2, "the-wan", secondSetScope2, true);
+        SECTION("Intercept supplies original indeterminates")
+        {
+            interceptHelper(&rescope1, "the-wan", originalSetScope1, true);
+            reprodyne_mark_frame();
+            interceptHelper(&rescope2, "the-wan", originalSetScope2, true);
+        }
+        SECTION("Discard supplied indeterminates")
+        {
+            //These new values are intercepted and replaced
+            const auto secondSetScope1 = generateList();
+            const auto secondSetScope2 = generateList();
+
+            interceptHelper(&rescope1, "the-wan", secondSetScope1, false);
+            reprodyne_mark_frame();
+            interceptHelper(&rescope2, "the-wan", secondSetScope2, false);
+        }
     }
     SECTION("Mismatched frame")
     {
@@ -84,6 +107,21 @@ TEST_CASE("woof")
         //This is where the magic happens~
         interceptHelper(&rescope1, "the-wan", originalSetScope1, true);
         /*MARK FRAME MISSING*/
-        interceptHelper(&rescope2, "the-wan", originalSetScope2, false);
+
+        reprodyne_set_playback_failure_handler(&custom_failure_handler);
+
+        bool success = false;
+
+        try
+        {
+            interceptHelper(&rescope2, "the-wan", originalSetScope2, false); //This call should fail
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            REQUIRE(oops.code == REPRODYNE_STAT_FRAME_MISMATCH);
+            success = true;
+        }
+
+        REQUIRE(success);
     }
 }
