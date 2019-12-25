@@ -1,7 +1,11 @@
 #ifndef REPRODYNE_H
 #define REPRODYNE_H
 
+#define REPRODYNE_STAT_FRAME_MISMATCH 10
+#define REPRODYNE_STAT_CALL_MISMATCH  11
+
 typedef void(*Reprodyne_playback_failure_handler)(const char* msg);
+
 
 #ifdef REPRODYNE_AVAILABLE
 
