@@ -11,7 +11,7 @@ public:
     const int code;
 };
 
-void custom_failure_handler(const int code, const char*)
+void code_gobbling_error_handler(const int code, const char*)
 {
     throw OopsieWhoopsie(code);
 }
@@ -106,15 +106,17 @@ TEST_CASE("woof")
 
         //This is where the magic happens~
         interceptHelper(&rescope1, "the-wan", originalSetScope1, true);
+
         /*MARK FRAME MISSING*/
 
-        reprodyne_set_playback_failure_handler(&custom_failure_handler);
 
         bool success = false;
 
+        reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
         try
         {
             interceptHelper(&rescope2, "the-wan", originalSetScope2, false); //This call should fail
+            FAIL("Intercept didn't fail with mismatched frame id");
         }
         catch(const OopsieWhoopsie oops)
         {
