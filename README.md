@@ -36,9 +36,9 @@ e.g.
 ### A word on compiling/linking against Reprodyne (Important)
 For Reprodyne to be usable in your project, you must define "REPRODYNE_AVAILABLE" (Preferrably passed to your compiler) and link against the library itself.
 
-The header is safe to use without linking against the library as long as "REPRODYNE_AVAILABLE" is not defined. The macros expand into sane defaults.
+The Reprodyne api is defined entirely as two sets of macros in the "reprodyne.h" header, switched by defining a "REPRODYNE_AVAILABLE". One set expands to nothing so that Reprodyne doesn't end up in your release binaries, and this is the default setting. The other expands to the internal Reprodyne function calls and is enabled by defining the switch.
 
-The Reprodyne api is defined entirely as two sets of macros in the "reprodyne.h" header, switched by defining a "REPRODYNE_AVAILABLE". One set expands to nothing so that Reprodyne doesn't end up in your release binaries, and this is the default setting. The other expands to the internal Reprodyne function calls and is enabled by defining "REPRODYNE_AVAILABLE".
+The header is safe to use without linking against the library as long as "REPRODYNE_AVAILABLE" is not defined. The macros expand into sane defaults.
 
 
 # Usage A.K.A not so brief
