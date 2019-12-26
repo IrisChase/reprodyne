@@ -86,7 +86,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
 #define reprodyne_read_indeterminate(scope, key)
 #define reprodyne_intercept_indeterminate(scope, key, val) val
 
-#define reprodyne_serialize_call(scope, key, call)
+#define reprodyne_serialize(scope, key, call)
 
 
 #endif //REPRODYNE_AVAILABLE

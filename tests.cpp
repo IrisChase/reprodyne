@@ -46,6 +46,9 @@ TEST_CASE("woof")
         {
             const double rep = reprodyne_intercept_indeterminate(scope, key.c_str(), list[i]);
 
+            //This would throw on a mismatch so we good.
+            reprodyne_serialize(scope, key.c_str(), std::string("pretendFunctionCall(" + std::to_string(rep) + ");").c_str());
+
             if(validationSet.size()) REQUIRE(validationSet[i] == rep);
         }
     };
