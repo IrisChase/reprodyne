@@ -32,6 +32,10 @@ e.g.
 # Usage A.K.A not so brief
 Reprodyne allows you to "intercept" indeterminate values (System events, network packets, time values, etc), serialize function calls utilizing this data, and then save to "tape". In playback mode, the indeterminates are then fed back into the functions in the order that they were originally created, and the serialized calls are then compared to the saved ones to ensure that the functions are behaving as before.
 
+## Scopes, Frames and Subkeys oh my!
+
+dit dot dit
+
 # Contributing
 
 # Credits
