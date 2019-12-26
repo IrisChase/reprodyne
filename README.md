@@ -1,13 +1,10 @@
 # Reprodyne
 Reprodyne is an Apache 2 licensed C/C++ library with the purpose of transforming non-deterministic funtions into deterministic ones, and to serialize output from them for testing. This is done by "intercepting" indeterminate values in record mode, resupplying them in playback mode, and comparing the saved serialized outputs to the live ones.
 
-This affords you the benefits (immediacy and simplicity) of manual testing, with the number one advantage of automated testing (namely, automation...).
-
-The design philosophy is that, at least generally, real world data is both easier and faster to generate and save, and more useful to test against, than mocks.
+The design philosophy is that, at least generally, real world data is both easier and faster to generate and save, and more useful to test against, than mocks. This affords you the benefits (immediacy and simplicity) of manual testing, with the number one advantage of automated testing (namely, automation...).
 
 Reprodyne is not meant to *replace* your current preferred test framework, but rather to augment it's capabilities.
 
-Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
 
 
 # Installation
@@ -34,11 +31,11 @@ e.g.
 ## Installing the libraries
 
 ### A word on compiling/linking against Reprodyne (Important)
-For Reprodyne to be usable in your project, you must define "REPRODYNE_AVAILABLE" (Preferrably passed to your compiler) and link against the library itself.
-
 The Reprodyne api is defined entirely as two sets of macros in the "reprodyne.h" header, switched by defining a "REPRODYNE_AVAILABLE". One set expands to nothing so that Reprodyne doesn't end up in your release binaries, and this is the default setting. The other expands to the internal Reprodyne function calls and is enabled by defining the switch.
 
-The header is safe to use without linking against the library as long as "REPRODYNE_AVAILABLE" is not defined. The macros expand into sane defaults.
+For Reprodyne to be usable in your project, you must define the switch macro (Preferrably passed to your compiler) and link against the library itself.
+
+The header is safe to use without linking against the library as long as the switch is not defined. The macros expand into sane defaults.
 
 
 # Usage A.K.A not so brief
@@ -64,9 +61,18 @@ More detailed explanation of it.
 
 blah blah fucking blah.
 
+I can guarantee that during a playback failure, that it is safe to longjmp out of the custom handler playback handler. Resources in these code paths are carefully managed and Reprodyne will not leak* but obviously I cannot make that guarantee for anything actually calling the playback functions. The custom playback error handler is intended for seamless integration into your test framework, not for recovery (It *is* a test failure, afterall). The fact that it doesn't leak itself is almost a token guarantee.
+
+I can also guarantee that it's safe to throw a C++ exception out of the custom playback handler, provided that the library is ABI compatible with the executable it is being linked against, or at the very least, that the exception can safely pass through it without causing a fuss (The code paths calling the playback failure handler does not contain any try/catch blocks).
+
+*Unless I have a bad day or something
+
 
 # Contributing
 
 # Credits
+Concieved and developed by Iris Chase.
+
+Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
 
 # License
