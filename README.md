@@ -7,8 +7,6 @@ The design philosophy is that, at least generally, real world data is both easie
 
 Reprodyne is not meant to *replace* your current preferred test framework, but rather to augment it's capabilities.
 
-Reprodyne is defined as a set of macros so that it can easily be compiled out for release.
-
 Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
 
 
@@ -35,6 +33,13 @@ e.g.
 
 ## Installing the libraries
 
+### A word on compiling/linking against Reprodyne (Important)
+For Reprodyne to be usable in your project, you must define "REPRODYNE_AVAILABLE" (Preferrably passed to your compiler) and link against the library itself.
+
+The header is safe to use without linking against the library as long as "REPRODYNE_AVAILABLE" is not defined. The macros expand into sane defaults.
+
+The Reprodyne api is defined entirely as two sets of macros in the "reprodyne.h" header, switched by defining a "REPRODYNE_AVAILABLE". One set expands to nothing so that Reprodyne doesn't end up in your release binaries, and this is the default setting. The other expands to the internal Reprodyne function calls and is enabled by defining "REPRODYNE_AVAILABLE".
+
 
 # Usage A.K.A not so brief
 Reprodyne allows you to "intercept" indeterminate values (System events, network packets, time values, etc), serialize function calls utilizing this data, and then save to "tape". In playback mode, the indeterminates are then fed back into the functions in the order that they were originally created, and the serialized calls are then compared to the saved ones to ensure that the functions are behaving as before.
@@ -46,7 +51,6 @@ The following is a minimal example
 
 (snip with comments)
 
-#### A word on linking
 
 
 ## Scopes, Frames and Subkeys oh my!
