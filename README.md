@@ -11,8 +11,7 @@ Reprodyne was originally developed for use in end-to-end testing of a GUI framew
 
 
 # Installation
-To build Reprodyne you need the following:
-
+## Build Requirements:
 ### Toolchain:
 - CMake >= 3.12
 - C++ compiler with C++17 support
