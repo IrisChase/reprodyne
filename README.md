@@ -7,6 +7,8 @@ The design philosophy is that, at least generally, real world data is both easie
 
 Reprodyne is not meant to *replace* your current preferred test framework, but rather to augment it's capabilities.
 
+Reprodyne is defined as a set of macros so that it can easily be compiled out for release.
+
 Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
 
 
@@ -19,7 +21,7 @@ Reprodyne was originally developed for use in end-to-end testing of a GUI framew
 #### The following libraries must be available to CMake:
 - ZLIB
 - Flatbuffers
-- Catch2 (Optional. Required for self-tests but not for your own use)
+- Catch2 (Optional. Required for testing Reprodyne itself)
 
 Reprodyne follows standard CMake usage
 
@@ -43,6 +45,9 @@ Reprodyne allows you to "intercept" indeterminate values (System events, network
 The following is a minimal example
 
 (snip with comments)
+
+#### A word on linking
+
 
 ## Scopes, Frames and Subkeys oh my!
 
