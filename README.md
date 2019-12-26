@@ -11,17 +11,29 @@ Reprodyne was originally developed for use in end-to-end testing of a GUI framew
 
 
 # Installation
-## Build Requirements:
-### Toolchain:
-- CMake >= 3.12
-- C++ compiler with C++17 support
 
-### Libraries available to CMake:
+Reprodyne requires the following to be built:
+
+#### Toolchain:
+- C++ compiler with C++17 support
+- CMake >= 3.12
+
+#### The following libraries must be available to CMake:
 - ZLIB
 - Flatbuffers
 - Catch2 (Optional. Required for self-tests but not for your own use)
 
 Reprodyne follows standard CMake usage
 
-# not so brief
+e.g.
+
+--GIVE EXAMPLE--
+
+# Usage A.K.A not so brief
 Reprodyne allows you to "intercept" indeterminate values (System events, network packets, time values, etc), serialize function calls utilizing this data, and then save to "tape". In playback mode, the indeterminates are then fed back into the functions in the order that they were originally created, and the serialized calls are then compared to the saved ones to ensure that the functions are behaving as before.
+
+# Contributing
+
+# Credits
+
+# License
