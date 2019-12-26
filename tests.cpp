@@ -16,7 +16,6 @@ void code_gobbling_error_handler(const int code, const char*)
     throw OopsieWhoopsie(code);
 }
 
-
 double time()
 {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -116,5 +115,34 @@ TEST_CASE("woof")
         }
 
         REQUIRE(success); //, failure is NOT an option.
+    }
+    SECTION("Read past the end")
+    {
+
+    }
+    SECTION("Call mismatch")
+    {
+
+    }
+    SECTION("Unregistered scope")
+    {
+
+    }
+    SECTION("Scope override")
+    {
+
+    }
+    SECTION("Two subscopes, one ordinal scope")
+    {
+
+    }
+    SECTION("Read without corresponding write")
+    {
+
+    }
+
+    SECTION("Graceful handling of generally dirty inputs")
+    {
+
     }
 }
