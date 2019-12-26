@@ -57,7 +57,7 @@ dit dot dit
 More detailed explanation of it.
 
 
-## Exception/longjmp safety
+## Custom playback failure handling and exception/longjmp safety
 
 blah blah fucking blah.
 
