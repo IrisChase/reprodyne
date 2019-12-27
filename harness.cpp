@@ -261,7 +261,7 @@ void reprodyne_do_not_call_this_function_directly_play(const char* path)
     coldTape = reprodyne::GetTapeContainer(&loadedBuffer[0]);
 }
 
-void reprodyne_do_not_call_this_function_directly_assert_tapes_at_end()
+void reprodyne_do_not_call_this_function_directly_assert_complete_read()
 {
     if(readMode() != Mode::Play)
     {
@@ -301,8 +301,8 @@ void reprodyne_do_not_call_this_function_directly_assert_tapes_at_end()
         }
     }
 
-    if(progTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_PROG_TAPE_UNFINISHED, jumpSafeString.c_str());
-    if(validationTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_CALL_TAPE_UNFINISHED, jumpSafeString.c_str());
+    if(progTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
+    if(validationTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
 }
 
 void reprodyne_do_not_call_this_function_directly_open_scope(void* ptr)

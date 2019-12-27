@@ -1,12 +1,12 @@
 #ifndef REPRODYNE_H
 #define REPRODYNE_H
 
-#define REPRODYNE_STAT_FRAME_MISMATCH         10
-#define REPRODYNE_STAT_CALL_MISMATCH          11
-#define REPRODYNE_STAT_EMPTY_TAPE             12
-#define REPRODYNE_STAT_TAPE_PAST_END          13
-#define REPRODYNE_STAT_CALL_TAPE_UNFINISHED   14
-#define REPRODYNE_STAT_PROG_TAPE_UNFINISHED   15
+#define REPRODYNE_STAT_FRAME_MISMATCH              10
+#define REPRODYNE_STAT_CALL_MISMATCH               11
+#define REPRODYNE_STAT_EMPTY_TAPE                  12
+#define REPRODYNE_STAT_TAPE_PAST_END               13
+#define REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ   14
+#define REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ   15
 
 typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* msg);
 
@@ -22,7 +22,7 @@ void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(R
 int reprodyne_do_not_call_this_function_directly_mode_record();
 int reprodyne_do_not_call_this_function_directly_mode_play();
 
-void reprodyne_do_not_call_this_function_directly_assert_tapes_at_end();
+void reprodyne_do_not_call_this_function_directly_assert_complete_read();
 
 void reprodyne_do_not_call_this_function_directly_record();
 void reprodyne_do_not_call_this_function_directly_save(const char* path);
@@ -55,7 +55,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
 #define reprodyne_save(path) reprodyne_do_not_call_this_function_directly_save(path)
 #define reprodyne_play(path) reprodyne_do_not_call_this_function_directly_play(path)
 
-#define reprodyne_assert_tapes_at_end() reprodyne_do_not_call_this_function_directly_assert_tapes_at_end()
+#define reprodyne_assert_complete_read() reprodyne_do_not_call_this_function_directly_assert_complete_read()
 
 //If a pointer is reused*, then nothing of note happens.
 //It's fine don't worry about it. The Right Thing is done.
@@ -85,7 +85,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
 #define reprodyne_save(path)
 #define reprodyne_play(path)
 
-#define reprodyne_assert_tapes_at_end()
+#define reprodyne_assert_complete_read()
 
 #define reprodyne_open_scope(scope)
 #define reprodyne_mark_frame()
