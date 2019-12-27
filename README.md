@@ -64,9 +64,10 @@ I can also guarantee that it's safe to throw a C++ exception out of the custom p
 
 
 # Contributing
+Contributions are welcome, but I would prefer it if you contacted me (iris@enesda.com) before beginning work on anything non-trivial to avoid wasting time.
 
 # Credits
-Concieved and developed by Iris Chase.
+Concieved and developed by Iris Chase (iris@enesda.com)
 
 Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
 
