@@ -88,6 +88,8 @@ TEST_CASE("woof")
             interceptHelper(&rescope1, "the-wan", secondSetScope1, originalSetScope1);
             reprodyne_mark_frame();
             interceptHelper(&rescope2, "the-wan", secondSetScope2, originalSetScope2);
+
+            reprodyne_assert_complete_read();
         }
     }
     SECTION("Mismatched frame")
@@ -145,4 +147,14 @@ TEST_CASE("woof")
     {
 
     }
+    SECTION("Incomplete program read")
+    {
+
+    }
+    SECTION("Incomplete call read")
+    {
+
+    }
+
+
 }
