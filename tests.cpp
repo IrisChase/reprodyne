@@ -45,11 +45,14 @@ TEST_CASE("woof")
         {
             const double rep = reprodyne_intercept_indeterminate(scope, key.c_str(), list[i]);
 
-            //This would throw on a mismatch so we good.
-            reprodyne_serialize(scope, key.c_str(), std::string("pretendFunctionCall(" + std::to_string(rep) + ");").c_str());
-
             if(validationSet.size()) REQUIRE(validationSet[i] == rep);
         }
+    };
+
+    auto callHelper = [&](void* scope, std::string key, auto list)
+    {
+        for(const double i : list)
+            reprodyne_serialize(scope, key.c_str(), std::string("pretendFunctionCall(" + std::to_string(i) + ");").c_str());
     };
 
 
@@ -60,17 +63,20 @@ TEST_CASE("woof")
     interceptHelper(&scope1, "the-wan", originalSetScope1, originalSetScope1);
     reprodyne_mark_frame();
     interceptHelper(&scope2, "the-wan", originalSetScope2, originalSetScope2);
+    callHelper(&scope2, "the-wan", originalSetScope2);
 
     {
         const auto testDataPath = "reprodyne-test-data.rep";
         reprodyne_save(testDataPath);
         reprodyne_play(testDataPath); //Automatically re-initializes everything, don't worry~
+
+        reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
+
+        reprodyne_mark_frame();
     }
 
     SECTION("Correct interception")
     {
-        reprodyne_mark_frame();
-
         int rescope2;
         int rescope1;
 
@@ -88,13 +94,13 @@ TEST_CASE("woof")
             interceptHelper(&rescope1, "the-wan", secondSetScope1, originalSetScope1);
             reprodyne_mark_frame();
             interceptHelper(&rescope2, "the-wan", secondSetScope2, originalSetScope2);
+            callHelper(&rescope2, "the-wan", originalSetScope2);
 
             reprodyne_assert_complete_read();
         }
     }
     SECTION("Mismatched frame")
     {
-        reprodyne_mark_frame();
         reprodyne_open_scope(&scope1);
         reprodyne_open_scope(&scope2);
 
@@ -103,7 +109,6 @@ TEST_CASE("woof")
         /*MARK FRAME MISSING*/
 
         bool success = false;
-        reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
 
         try
         {
@@ -153,8 +158,23 @@ TEST_CASE("woof")
     }
     SECTION("Incomplete call read")
     {
+        reprodyne_open_scope(&scope1);
+        reprodyne_open_scope(&scope2);
 
+        interceptHelper(&scope1, "the-wan", originalSetScope1, {});
+        reprodyne_mark_frame();
+        interceptHelper(&scope2, "the-wan", originalSetScope2, {});
+
+        /*SERIALIZE CALL MISSING*/
+
+        try
+        {
+            reprodyne_assert_complete_read();
+            FAIL("Reprodyne should have aborted on incomplete call read.");
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            REQUIRE(oops.code == REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ);
+        }
     }
-
-
 }

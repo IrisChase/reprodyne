@@ -291,12 +291,17 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
 
             };
 
-            if(readVal.programPos != keyedEntry->programTape()->size())
+            auto compareReadPosToSize = [&](const auto& readVal, const int size)
+            {
+                return readVal ? *readVal == size : !size;
+            };
+
+            if(!compareReadPosToSize(readVal.programPos, keyedEntry->programTape()->size()))
             {
                 setErrString("Program");
                 progTapeFailure = true;
             }
-            if(readVal.callPos != keyedEntry->validationTape()->size())
+            if(!compareReadPosToSize(readVal.callPos, keyedEntry->validationTape()->size()))
             {
                 setErrString("Call");
                 validationTapeFailure = true;
