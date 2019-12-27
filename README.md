@@ -7,8 +7,7 @@ Reprodyne is not meant to *replace* your current preferred test framework, but r
 
 
 
-# Installation
-## Building from source
+# Build/Install
 #### Required toolchain:
 - C++ compiler with C++17 support
 - CMake >= 3.12
