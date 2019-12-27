@@ -147,14 +147,31 @@ TEST_CASE("woof")
     {
 
     }
-
     SECTION("Graceful handling of generally dirty inputs")
+    {
+
+    }
+    SECTION("Incomplete program read takes precedence over incomplete validation read")
     {
 
     }
     SECTION("Incomplete program read")
     {
+        reprodyne_open_scope(&scope1);
+        reprodyne_open_scope(&scope2);
 
+        interceptHelper(&scope1, "the-wan", originalSetScope1, {});
+        reprodyne_mark_frame();
+
+        try
+        {
+            reprodyne_assert_complete_read();
+            FAIL("Reprodyne should have aborted on incomplete program read.");
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            REQUIRE(oops.code == REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ);
+        }
     }
     SECTION("Incomplete call read")
     {
