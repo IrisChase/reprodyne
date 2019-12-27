@@ -15,7 +15,7 @@
 
 static void reprodyne_default_playback_failure_handler(const int code, const char* msg);
 
-Reprodyne_playback_failure_handler playbackFailureHandler = &reprodyne_default_playback_failure_handler;
+Reprodyne_playback_failure_handler playbackErrorHandler = &reprodyne_default_playback_failure_handler;
 
 
 std::map<void*, int> scopePtrToOrdinalMap;
@@ -78,12 +78,22 @@ static void reprodyne_default_playback_failure_handler(const int code, const cha
     std::terminate();
 }
 
+static void playback_error_handler_wrapper(const int code, const char* msg)
+{
+    playbackErrorHandler(code, msg);
+    //TODO: Terminate here?
+}
+
 static void logic_error_die(const std::string specifically = "Generic logic error.")
 {
     std::cerr << "Reprodyne INTERNAL ERROR: " << specifically << std::endl << std::flush;
     std::terminate();
 }
 
+static void warning(const char* msg)
+{
+    std::cerr << "Reprodyne WARNING: " << msg << std::endl;
+}
 
 static int lastFrameId()
 {
@@ -101,7 +111,7 @@ static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
     {
         if(tapeSize == 0)
         {
-            playbackFailureHandler(REPRODYNE_STAT_EMPTY_TAPE, "Tape empty. Bad tape?");
+            playback_error_handler_wrapper(REPRODYNE_STAT_EMPTY_TAPE, "Tape empty. Bad tape?");
         }
 
         optionalOffset = 0;
@@ -109,7 +119,7 @@ static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
 
     if(*optionalOffset == tapeSize)
     {
-        playbackFailureHandler(REPRODYNE_STAT_TAPE_PAST_END, "Too many reads, tape empty.");
+        playback_error_handler_wrapper(REPRODYNE_STAT_TAPE_PAST_END, "Too many reads, tape empty.");
     }
 
     return (*optionalOffset)++;
@@ -124,12 +134,12 @@ static void assertFrameId(const int frameId, const char* moreSpecifically)
     jumpSafeString += moreSpecifically;
     jumpSafeString += '\n';
 
-    playbackFailureHandler(REPRODYNE_STAT_FRAME_MISMATCH, jumpSafeString.c_str());
+    playback_error_handler_wrapper(REPRODYNE_STAT_FRAME_MISMATCH, jumpSafeString.c_str());
 }
 
-static std::string readStoredCall(void* scope, const std::string subscopeKey)
+static std::string readStoredCall(void* scopePtr, const std::string subscopeKey)
 {
-    const int ordinalScopeOffset = scopePtrToOrdinalMap[scope];
+    const int ordinalScopeOffset = scopePtrToOrdinalMap[scopePtr];
 
     const reprodyne::KeyedScopeTapeEntry* keyedScope =
             coldTape->ordinalScopeTape()->Get(ordinalScopeOffset)->keyedScopeTape()->LookupByKey(subscopeKey.c_str());
@@ -181,7 +191,7 @@ void reprodyne_do_not_call_this_function_directly_reset()
 
 void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(Reprodyne_playback_failure_handler handler)
 {
-    playbackFailureHandler = handler; //Not my problem anymore...
+    playbackErrorHandler = handler; //Not my problem anymore...
 }
 
 void reprodyne_do_not_call_this_function_directly_record()
@@ -251,6 +261,50 @@ void reprodyne_do_not_call_this_function_directly_play(const char* path)
     coldTape = reprodyne::GetTapeContainer(&loadedBuffer[0]);
 }
 
+void reprodyne_do_not_call_this_function_directly_assert_tapes_at_end()
+{
+    if(readMode() != Mode::Play)
+    {
+        warning("Tape assert was called in a mode other than playback. This is ill-formed.");
+        return;
+    }
+
+    bool progTapeFailure = false;
+    bool validationTapeFailure = false;
+
+    for(int ordinalScope = 0; ordinalScope != coldTape->ordinalScopeTape()->size(); ++ordinalScope)
+    {
+        for(auto keyedEntry : *coldTape->ordinalScopeTape()->Get(ordinalScope)->keyedScopeTape())
+        {
+            const LastReadKey readKey = {ordinalScope, keyedEntry->key()->str()};
+            const LastReadVal readVal = lastRead[readKey];
+
+            auto setErrString = [&](const std::string type)
+            {
+                jumpSafeString = type;
+                jumpSafeString += "tape was not read to completion for scope key: ";
+                jumpSafeString += readKey.subscopeKey;
+                jumpSafeString.push_back('\n');
+
+            };
+
+            if(readVal.programPos != keyedEntry->programTape()->size())
+            {
+                setErrString("Program");
+                progTapeFailure = true;
+            }
+            if(readVal.callPos != keyedEntry->validationTape()->size())
+            {
+                setErrString("Call");
+                validationTapeFailure = true;
+            }
+        }
+    }
+
+    if(progTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_PROG_TAPE_UNFINISHED, jumpSafeString.c_str());
+    if(validationTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_CALL_TAPE_UNFINISHED, jumpSafeString.c_str());
+}
+
 void reprodyne_do_not_call_this_function_directly_open_scope(void* ptr)
 {
     liveTape.emplace_back();
@@ -263,21 +317,21 @@ void reprodyne_do_not_call_this_function_directly_mark_frame()
     else ++(*frameCounter);
 }
 
-void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scope, const char* key, double indeterminate)
+void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scopePtr, const char* key, double indeterminate)
 {
-    if(!(readMode() == Mode::Record))
+    if(readMode() != Mode::Play)
     {
         std::cerr << "Reprodyne WARNING: write_indeterminate called in non-record mode!" << std::endl;
         return;
     }
 
     auto indeterminateOffset = reprodyne::CreateIndeterminateEntry(builder, lastFrameId(), indeterminate);
-    liveTape[scopePtrToOrdinalMap[scope]][key].programTape.push_back(indeterminateOffset);
+    liveTape[scopePtrToOrdinalMap[scopePtr]][key].programTape.push_back(indeterminateOffset);
 }
 
-double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* scope, const char* subscopeKey)
+double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* scopePtr, const char* subscopeKey)
 {
-    const int ordinalScopeOffset = scopePtrToOrdinalMap[scope];
+    const int ordinalScopeOffset = scopePtrToOrdinalMap[scopePtr];
 
     //I just don't feel like naming all the intermediates, bite me.
     const reprodyne::KeyedScopeTapeEntry* keyedScope =
@@ -308,7 +362,7 @@ double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void
     logic_error_die();
 }
 
-void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const char* subScopeKey, const char* call)
+void reprodyne_do_not_call_this_function_directly_serialize(void* scopePtr, const char* subScopeKey, const char* call)
 {
     if(readMode() == Mode::Record)
     {
@@ -316,17 +370,17 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
         auto stringOffset = builder.CreateString(cppStringCall.c_str(), cppStringCall.size());
         auto callEntryOffset = reprodyne::CreateCallEntry(builder, lastFrameId(), stringOffset);
         
-        liveTape[scopePtrToOrdinalMap[scope]][subScopeKey].validationTape.push_back(callEntryOffset);
+        liveTape[scopePtrToOrdinalMap[scopePtr]][subScopeKey].validationTape.push_back(callEntryOffset);
     }
     else if(readMode() == Mode::Play)
     {
         bool failure = false;
 
         //This is convoluted because we need to ensure that the destructor for
-        // "storedCall" is invoked before we call the playbackFailureHandler,
+        // "storedCall" is invoked before we call the playback_error_handler_wrapper,
         // which may longjmp back out of here.
         {
-            const std::string storedCall = readStoredCall(scope, subScopeKey);
+            const std::string storedCall = readStoredCall(scopePtr, subScopeKey);
 
             if(storedCall != call)
             {
@@ -339,7 +393,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
             }
         }
 
-        if(failure) playbackFailureHandler(REPRODYNE_STAT_CALL_MISMATCH, jumpSafeString.c_str());
+        if(failure) playback_error_handler_wrapper(REPRODYNE_STAT_CALL_MISMATCH, jumpSafeString.c_str());
     }
     else logic_error_die("Mode corrupt or not set somehow.");
 }
