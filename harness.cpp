@@ -319,7 +319,7 @@ void reprodyne_do_not_call_this_function_directly_mark_frame()
 
 void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scopePtr, const char* key, double indeterminate)
 {
-    if(readMode() != Mode::Play)
+    if(readMode() == Mode::Play)
     {
         std::cerr << "Reprodyne WARNING: write_indeterminate called in non-record mode!" << std::endl;
         return;
