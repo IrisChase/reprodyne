@@ -105,6 +105,9 @@ static int lastFrameId()
     return *frameCounter;
 }
 
+//Note! the "optionalOffset" parameter is a reference, this prevents it from leaking
+// after a call to playback_error_hanlder_wrapper, it works because the reference is actually
+// stored in the "lastRead" structure. Don't get clever and call this with anything else.
 static int readOffset(std::optional<int>& optionalOffset, const int tapeSize)
 {
     if(!optionalOffset) //Initialize
