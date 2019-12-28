@@ -95,6 +95,15 @@ static void warning(const char* msg)
     std::cerr << "Reprodyne WARNING: " << msg << std::endl;
 }
 
+static int readScopeOrdinal(void* scopePtr)
+{
+    auto it = scopePtrToOrdinalMap.find(scopePtr);
+    if(it == scopePtrToOrdinalMap.end())
+        playback_error_handler_wrapper(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Scope ptr unrecognized.");
+
+    return it->second;
+}
+
 static int lastFrameId()
 {
     if(!frameCounter)
@@ -142,7 +151,7 @@ static void assertFrameId(const int frameId, const char* moreSpecifically)
 
 static std::string readStoredCall(void* scopePtr, const std::string subscopeKey)
 {
-    const int ordinalScopeOffset = scopePtrToOrdinalMap[scopePtr];
+    const int ordinalScopeOffset = readScopeOrdinal(scopePtr);
 
     const reprodyne::KeyedScopeTapeEntry* keyedScope =
             coldTape->ordinalScopeTape()->Get(ordinalScopeOffset)->keyedScopeTape()->LookupByKey(subscopeKey.c_str());
@@ -334,12 +343,12 @@ void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scop
     }
 
     auto indeterminateOffset = reprodyne::CreateIndeterminateEntry(builder, lastFrameId(), indeterminate);
-    liveTape[scopePtrToOrdinalMap[scopePtr]][key].programTape.push_back(indeterminateOffset);
+    liveTape[readScopeOrdinal(scopePtr)][key].programTape.push_back(indeterminateOffset);
 }
 
 double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* scopePtr, const char* subscopeKey)
 {
-    const int ordinalScopeOffset = scopePtrToOrdinalMap[scopePtr];
+    const int ordinalScopeOffset = readScopeOrdinal(scopePtr);
 
     //I just don't feel like naming all the intermediates, bite me.
     const reprodyne::KeyedScopeTapeEntry* keyedScope =
@@ -372,13 +381,14 @@ double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void
 
 void reprodyne_do_not_call_this_function_directly_serialize(void* scopePtr, const char* subScopeKey, const char* call)
 {
+    const int scopeOrdinal = readScopeOrdinal(scopePtr);
     if(readMode() == Mode::Record)
     {
         const std::string cppStringCall = call;
         auto stringOffset = builder.CreateString(cppStringCall.c_str(), cppStringCall.size());
         auto callEntryOffset = reprodyne::CreateCallEntry(builder, lastFrameId(), stringOffset);
         
-        liveTape[scopePtrToOrdinalMap[scopePtr]][subScopeKey].validationTape.push_back(callEntryOffset);
+        liveTape[scopeOrdinal][subScopeKey].validationTape.push_back(callEntryOffset);
     }
     else if(readMode() == Mode::Play)
     {

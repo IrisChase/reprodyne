@@ -1,12 +1,13 @@
 #ifndef REPRODYNE_H
 #define REPRODYNE_H
 
-#define REPRODYNE_STAT_FRAME_MISMATCH              10
-#define REPRODYNE_STAT_CALL_MISMATCH               11
-#define REPRODYNE_STAT_EMPTY_TAPE                  12
-#define REPRODYNE_STAT_TAPE_PAST_END               13
-#define REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ   14
-#define REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ   15
+#define REPRODYNE_STAT_FRAME_MISMATCH              100
+#define REPRODYNE_STAT_CALL_MISMATCH               101
+#define REPRODYNE_STAT_EMPTY_TAPE                  102
+#define REPRODYNE_STAT_TAPE_PAST_END               103
+#define REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ   104
+#define REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ   105
+#define REPRODYNE_STAT_UNREGISTERED_SCOPE          106
 
 typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* msg);
 

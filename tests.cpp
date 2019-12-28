@@ -125,15 +125,69 @@ TEST_CASE("woof")
     }
     SECTION("Read past the end")
     {
+        reprodyne_open_scope(&scope1);
+        reprodyne_open_scope(&scope2);
 
+        interceptHelper(&scope1, "the-wan", originalSetScope1, {});
+
+        try
+        {
+            interceptHelper(&scope1, "the-wan", originalSetScope1, {});
+            FAIL("Read past end didn't fail correctly");
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            REQUIRE(oops.code == REPRODYNE_STAT_TAPE_PAST_END);
+        }
     }
     SECTION("Call mismatch")
     {
+        reprodyne_open_scope(&scope1);
+        reprodyne_open_scope(&scope2);
 
+        interceptHelper(&scope1, "the-wan", originalSetScope1, {});
+        reprodyne_mark_frame();
+        interceptHelper(&scope2, "the-wan", originalSetScope2, {});
+
+        try
+        {
+            reprodyne_serialize(&scope2, "the-wan", "wrongo");
+            FAIL("Mismatched Call not detected.");
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            //Check da oophs code
+            REQUIRE(oops.code == REPRODYNE_STAT_CALL_MISMATCH);
+        }
     }
     SECTION("Unregistered scope")
     {
+        double up;
 
+        SECTION("Read indeterminate with bad scope")
+        {
+            try
+            {
+                reprodyne_intercept_indeterminate(&up, "bep", 3);
+                FAIL("Unregistered scope accepted");
+            }
+            catch(const OopsieWhoopsie oops)
+            {
+                REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
+            }
+        }
+        SECTION("Write indeterminate with bad scope")
+        {
+            //...
+        }
+        SECTION("Serialize with bad scope")
+        {
+            //Oops
+        }
+        SECTION("Read stored call with bad scope")
+        {
+
+        }
     }
     SECTION("Scope override")
     {
