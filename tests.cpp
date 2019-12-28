@@ -197,19 +197,6 @@ TEST_CASE("woof")
             }
         }
     }
-    SECTION("Scope override")
-    {
-        //This has to be tested in record mode..
-
-    }
-    SECTION("Two subscopes, one ordinal scope")
-    {
-
-    }
-    SECTION("Incomplete program read takes precedence over incomplete validation read")
-    {
-        //Tested in the below, flesh out in separate test
-    }
     SECTION("Incomplete program read")
     {
         reprodyne_open_scope(&scope1);
@@ -249,4 +236,16 @@ TEST_CASE("woof")
             REQUIRE(oops.code == REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ);
         }
     }
+}
+
+TEST_CASE("Scope override")
+{
+}
+
+TEST_CASE("Two subscopes, one ordinal scope")
+{
+}
+
+TEST_CASE("Incomplete program read takes precedence over incomplete validation read")
+{
 }
