@@ -3,6 +3,7 @@
 
 #include "user-include/reprodyne.h"
 
+const auto testDataPath = "reprodyne-test-data.rep";
 
 class OopsieWhoopsie : public std::exception
 {
@@ -66,7 +67,6 @@ TEST_CASE("woof")
     callHelper(&scope2, "the-wan", originalSetScope2);
 
     {
-        const auto testDataPath = "reprodyne-test-data.rep";
         reprodyne_save(testDataPath);
         reprodyne_play(testDataPath); //Automatically re-initializes everything, don't worry~
 
@@ -246,6 +246,34 @@ TEST_CASE("Two subscopes, one ordinal scope")
 {
 }
 
+TEST_CASE("Emtpy scope key read/write")
+{
+}
+
 TEST_CASE("Incomplete program read takes precedence over incomplete validation read")
 {
+    reprodyne_record();
+    reprodyne_mark_frame();
+    int scope;
+
+    reprodyne_open_scope(&scope);
+
+    reprodyne_intercept_indeterminate(&scope, "n", 42);
+    reprodyne_serialize(&scope, "fjf", "ayeayeayeayeohh");
+
+    reprodyne_save(testDataPath);
+    reprodyne_play(testDataPath);
+
+    reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
+
+    try
+    {
+        reprodyne_assert_complete_read();
+        FAIL("assert complete read is just flat out fucking up");
+    }
+    catch(const OopsieWhoopsie oops)
+    {
+        //As opposed to call tape
+        REQUIRE(oops.code == REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ);
+    }
 }
