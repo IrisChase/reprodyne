@@ -240,10 +240,41 @@ TEST_CASE("woof")
 
 TEST_CASE("Scope override")
 {
-}
+    reprodyne_record();
+    reprodyne_mark_frame();
+    int scope;
 
-TEST_CASE("Two subscopes, one ordinal scope")
-{
+    reprodyne_open_scope(&scope);
+    reprodyne_intercept_indeterminate(&scope, "n", 42);
+
+    reprodyne_open_scope(&scope);
+    reprodyne_intercept_indeterminate(&scope, "n", 240); //Dyslexics be blazin' like
+
+    reprodyne_save(testDataPath);
+    reprodyne_play(testDataPath);
+
+    reprodyne_mark_frame();
+
+    auto validate = [](void* scope1, void* scope2)
+    {
+        reprodyne_open_scope(scope1);
+        REQUIRE(reprodyne_intercept_indeterminate(scope1, "n", 4839) == 42);
+
+        reprodyne_open_scope(scope2);
+        REQUIRE(reprodyne_intercept_indeterminate(scope2, "n", 43894389) == 240);
+    };
+
+    SECTION("Playback override with one pointer")
+    {
+        int scopee;
+        validate(&scopee, &scopee);
+    }
+    SECTION("Playback override with two pointers")
+    {
+        int scope1;
+        int scope2;
+        validate(&scope1, &scope2);
+    }
 }
 
 TEST_CASE("Emtpy scope key read/write")
