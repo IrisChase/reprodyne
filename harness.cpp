@@ -17,6 +17,12 @@ static void reprodyne_default_playback_failure_handler(const int code, const cha
 
 Reprodyne_playback_failure_handler playbackErrorHandler = &reprodyne_default_playback_failure_handler;
 
+namespace reprodyne
+{
+
+class EmptyTape : public std::exception {};
+
+}
 
 std::map<void*, int> scopePtrToOrdinalMap;
 std::optional<int> frameCounter;
@@ -81,10 +87,19 @@ static void reprodyne_default_playback_failure_handler(const int code, const cha
 static void playback_error_handler_wrapper(const int code, const char* msg)
 {
     playbackErrorHandler(code, msg);
-    //TODO: Terminate here?
+    std::terminate(); //If you do it I will.
 }
 
-static void logic_error_die(const std::string specifically = "Generic logic error.")
+static void error_tape_empty_for_key(const char* prefix, const char* key)
+{
+    jumpSafeString = prefix;
+    jumpSafeString += " tape empty for subscope key: ";
+    jumpSafeString += key;
+    jumpSafeString.push_back('\n');
+    playback_error_handler_wrapper(REPRODYNE_STAT_EMPTY_TAPE, jumpSafeString.c_str());
+}
+
+static void logic_error_die(const char* specifically = "Generic logic error.")
 {
     std::cerr << "Reprodyne INTERNAL ERROR: " << specifically << std::endl << std::flush;
     std::terminate();
@@ -149,20 +164,44 @@ static void assertFrameId(const int frameId, const char* moreSpecifically)
     playback_error_handler_wrapper(REPRODYNE_STAT_FRAME_MISMATCH, jumpSafeString.c_str());
 }
 
-static std::string readStoredCall(void* scopePtr, const std::string subscopeKey)
+static const reprodyne::KeyedScopeTapeEntry* readKeyedScopeTapeEntry(const int ordinalScopeOffset,
+                                                                     const char* subscopeKey,
+                                                                     const char* errPrefix)
+{
+    try
+    {
+        //We assume ordinalScopeOffset is safe.
+        auto keyedScopeTape = coldTape->ordinalScopeTape()->Get(ordinalScopeOffset)->keyedScopeTape();
+        if(!keyedScopeTape) throw reprodyne::EmptyTape();
+
+        auto tapeEntry = keyedScopeTape->LookupByKey(subscopeKey);
+        if(!tapeEntry) throw reprodyne::EmptyTape();
+
+        return tapeEntry;
+    }
+    catch(const reprodyne::EmptyTape)
+    {
+        error_tape_empty_for_key(errPrefix, subscopeKey);
+    }
+}
+
+static std::string readStoredCall(void* scopePtr, const char* subscopeKey)
 {
     const int ordinalScopeOffset = readScopeOrdinal(scopePtr);
+    const auto validationTape = readKeyedScopeTapeEntry(ordinalScopeOffset, subscopeKey, "Call")->validationTape();
 
-    const reprodyne::KeyedScopeTapeEntry* keyedScope =
-            coldTape->ordinalScopeTape()->Get(ordinalScopeOffset)->keyedScopeTape()->LookupByKey(subscopeKey.c_str());
+    if(!validationTape)
+    {
+        jumpSafeString = "Validation tape empty for key: ";
+        jumpSafeString += subscopeKey;
+        jumpSafeString.push_back('\n');
+        playback_error_handler_wrapper(REPRODYNE_STAT_EMPTY_TAPE, jumpSafeString.c_str());
+    }
 
-    const int currentTapeOffset =
-            readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].callPos, keyedScope->programTape()->size());
+    const reprodyne::CallEntry* c =
+            validationTape->Get(readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].callPos, validationTape->size()));
 
-    const reprodyne::CallEntry* c = keyedScope->validationTape()->Get(currentTapeOffset);
-    
     assertFrameId(c->frameId(), "Serialized calls out of order!");
-    
     return c->call()->str();
 }
 
@@ -284,8 +323,12 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
     bool progTapeFailure = false;
     bool validationTapeFailure = false;
 
+    if(!coldTape->ordinalScopeTape()) return;
+
     for(int ordinalScope = 0; ordinalScope != coldTape->ordinalScopeTape()->size(); ++ordinalScope)
     {
+        if(!coldTape->ordinalScopeTape()->Get(ordinalScope)->keyedScopeTape()) continue;
+
         for(auto keyedEntry : *coldTape->ordinalScopeTape()->Get(ordinalScope)->keyedScopeTape())
         {
             const LastReadKey readKey = {ordinalScope, keyedEntry->key()->str()};
@@ -297,7 +340,6 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
                 jumpSafeString += "tape was not read to completion for scope key: ";
                 jumpSafeString += readKey.subscopeKey;
                 jumpSafeString.push_back('\n');
-
             };
 
             auto compareReadPosToSize = [&](const auto& readVal, const int size)
@@ -351,13 +393,16 @@ double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* sco
     const int ordinalScopeOffset = readScopeOrdinal(scopePtr);
 
     //I just don't feel like naming all the intermediates, bite me.
-    const reprodyne::KeyedScopeTapeEntry* keyedScope =
-            coldTape->ordinalScopeTape()->Get(ordinalScopeOffset)->keyedScopeTape()->LookupByKey(subscopeKey);
+    const auto programTape = readKeyedScopeTapeEntry(ordinalScopeOffset, subscopeKey, "Program")->programTape();
 
-    const int currentTapeOffset =
-            readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].programPos, keyedScope->programTape()->size());
+    if(!programTape)
+    {
+        error_tape_empty_for_key("Program", subscopeKey);
+    }
 
-    const reprodyne::IndeterminateEntry* i = keyedScope->programTape()->Get(currentTapeOffset);
+    const reprodyne::IndeterminateEntry* i =
+            programTape->Get(readOffset(lastRead[{ordinalScopeOffset, subscopeKey}].programPos,
+                                           programTape->size()));
 
     assertFrameId(i->frameId(), "Determinates out of order!");
 
@@ -398,20 +443,23 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scopePtr, cons
         // "storedCall" is invoked before we call the playback_error_handler_wrapper,
         // which may longjmp back out of here.
         {
-            const std::string storedCall = readStoredCall(scopePtr, subScopeKey);
+            //readStoredCall can jump
+            jumpSafeString = readStoredCall(scopePtr, subScopeKey);
 
-            if(storedCall != call)
+            if(jumpSafeString != call)
             {
                 failure = true;
+
+                const std::string storedCall = jumpSafeString;
                 jumpSafeString = "Stored call mismatch! Program produced: \n";
                 jumpSafeString += call;
                 jumpSafeString += "Was expecting: \n";
                 jumpSafeString += storedCall;
                 jumpSafeString += '\n';
             }
-        }
 
-        if(failure) playback_error_handler_wrapper(REPRODYNE_STAT_CALL_MISMATCH, jumpSafeString.c_str());
+            if(failure) playback_error_handler_wrapper(REPRODYNE_STAT_CALL_MISMATCH, jumpSafeString.c_str());
+        }
     }
     else logic_error_die("Mode corrupt or not set somehow.");
 }

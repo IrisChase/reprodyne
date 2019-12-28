@@ -277,8 +277,32 @@ TEST_CASE("Scope override")
     }
 }
 
-TEST_CASE("Emtpy scope key read/write")
+TEST_CASE("Invalid scope key")
 {
+    reprodyne_record();
+    reprodyne_mark_frame();
+
+    int scope;
+    reprodyne_open_scope(&scope);
+
+    reprodyne_save(testDataPath);
+    reprodyne_play(testDataPath);
+
+    //TODO: make a test for this without these two lines. Whatever condition that is...
+    reprodyne_mark_frame();
+    reprodyne_open_scope(&scope);
+
+    reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
+
+    try
+    {
+        reprodyne_intercept_indeterminate(&scope, "notta", 42);
+        FAIL("Intercept with bad key in playback mode didn't fail");
+    }
+    catch(const OopsieWhoopsie oops)
+    {
+        REQUIRE(oops.code == REPRODYNE_STAT_EMPTY_TAPE);
+    }
 }
 
 TEST_CASE("Incomplete program read takes precedence over incomplete validation read")
@@ -307,4 +331,9 @@ TEST_CASE("Incomplete program read takes precedence over incomplete validation r
         //As opposed to call tape
         REQUIRE(oops.code == REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ);
     }
+}
+
+TEST_CASE("Validation and program tape different sizes")
+{
+
 }
