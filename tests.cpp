@@ -169,7 +169,7 @@ TEST_CASE("woof")
             try
             {
                 reprodyne_intercept_indeterminate(&up, "bep", 3);
-                FAIL("Unregistered scope accepted");
+                FAIL("Unregistered scope accepted in indeterminate read");
             }
             catch(const OopsieWhoopsie oops)
             {
@@ -186,28 +186,29 @@ TEST_CASE("woof")
         }
         SECTION("Read stored call with bad scope")
         {
-
+            try
+            {
+                reprodyne_serialize(&up, "bep", "");
+                FAIL("Unregistered scope accepted for serialize call");
+            }
+            catch(const OopsieWhoopsie oops)
+            {
+                REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
+            }
         }
     }
     SECTION("Scope override")
     {
+        //This has to be tested in record mode..
 
     }
     SECTION("Two subscopes, one ordinal scope")
     {
 
     }
-    SECTION("Read without corresponding write")
-    {
-
-    }
-    SECTION("Graceful handling of generally dirty inputs")
-    {
-
-    }
     SECTION("Incomplete program read takes precedence over incomplete validation read")
     {
-
+        //Tested in the below, flesh out in separate test
     }
     SECTION("Incomplete program read")
     {
