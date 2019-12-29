@@ -9,42 +9,15 @@
 #define REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ   105
 #define REPRODYNE_STAT_UNREGISTERED_SCOPE          106
 
-typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* msg);
 
 #ifdef REPRODYNE_AVAILABLE
-
-extern "C"
-{
-
-void reprodyne_do_not_call_this_function_directly_reset();
-
-void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(Reprodyne_playback_failure_handler handler);
-
-int reprodyne_do_not_call_this_function_directly_mode_record();
-int reprodyne_do_not_call_this_function_directly_mode_play();
-
-void reprodyne_do_not_call_this_function_directly_assert_complete_read();
-
-void reprodyne_do_not_call_this_function_directly_record();
-void reprodyne_do_not_call_this_function_directly_save(const char* path);
-void reprodyne_do_not_call_this_function_directly_play(const char* path);
-
-void reprodyne_do_not_call_this_function_directly_open_scope(void* scope);
-void reprodyne_do_not_call_this_function_directly_mark_frame();
-
-void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scope, const char* key, double val);
-double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* scope, const char* key);
-double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void* scope, const char* key, double val);
-
-void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const char* key, const char* cereal);
-
-} //extern "C"
 
 //If you believe lower case macros are evil... I'm sorry.
 //I just... I can't yell this much...
 
 #define reprodyne_reset() reprodyne_do_not_call_this_function_directly_reset()
 
+typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* msg);
 #define reprodyne_set_playback_failure_handler(handler) reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(handler)
 
 #define reprodyne_mode_play() reprodyne_do_not_call_this_function_directly_mode_play()
@@ -70,6 +43,34 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
 #define reprodyne_intercept_indeterminate(scope, key, val) reprodyne_do_not_call_this_function_directly_intercept_indeterminate(scope, key, val)
 
 #define reprodyne_serialize(scope, key, call) reprodyne_do_not_call_this_function_directly_serialize(scope, key, call)
+
+
+/*-------------------------------Implementation junk beyond this point-------------------------------*/
+extern "C"
+{
+void reprodyne_do_not_call_this_function_directly_reset();
+
+void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(Reprodyne_playback_failure_handler handler);
+
+int reprodyne_do_not_call_this_function_directly_mode_record();
+int reprodyne_do_not_call_this_function_directly_mode_play();
+
+void reprodyne_do_not_call_this_function_directly_assert_complete_read();
+
+void reprodyne_do_not_call_this_function_directly_record();
+void reprodyne_do_not_call_this_function_directly_save(const char* path);
+void reprodyne_do_not_call_this_function_directly_play(const char* path);
+
+void reprodyne_do_not_call_this_function_directly_open_scope(void* scope);
+void reprodyne_do_not_call_this_function_directly_mark_frame();
+
+void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scope, const char* key, double val);
+double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* scope, const char* key);
+double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void* scope, const char* key, double val);
+
+void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const char* key, const char* cereal);
+
+} //extern "C"
 
 #else
 
