@@ -302,7 +302,22 @@ TEST_CASE("Validation and program tape different sizes")
 
 TEST_CASE("Graceful handling of saved file with no entries")
 {
+    reprodyne_record();
+    reprodyne_save(testDataPath);
+    reprodyne_play(testDataPath);
+    reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
 
+    try
+    {
+        double up;
+        reprodyne_mark_frame();
+        reprodyne_intercept_indeterminate(&up, "fdsfd", 34243);
+    }
+    catch(const OopsieWhoopsie oops)
+    {
+        //This is really all we can get to I think...
+        REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
+    }
 }
 
 TEST_CASE("Unregistered scope")
