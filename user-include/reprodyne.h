@@ -43,8 +43,6 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
 //If you believe lower case macros are evil... I'm sorry.
 //I just... I can't yell this much...
 
-#define reprodyne_get_msg(code) reprodyne_do_not_call_this_function_directly_get_msg(code)
-
 #define reprodyne_reset() reprodyne_do_not_call_this_function_directly_reset()
 
 #define reprodyne_set_playback_failure_handler(handler) reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(handler)
