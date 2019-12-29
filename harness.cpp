@@ -253,7 +253,7 @@ void reprodyne_do_not_call_this_function_directly_save(const char* path)
 {
     if(readMode() == Mode::Play)
     {
-        std::cerr << "Reprodyne ERROR: Cannot save results in Playback mode!" << std::endl;
+        std::cerr << "Reprodyne WARNING: Cannot save results in Playback mode!" << std::endl;
         return;
     }
 
