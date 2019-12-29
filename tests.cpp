@@ -295,9 +295,58 @@ TEST_CASE("Incomplete program read takes precedence over incomplete validation r
     }
 }
 
-TEST_CASE("Validation and program tape different sizes")
+TEST_CASE("Validation and program tape different sizes, larger program tape")
 {
+    reprodyne_record();
+    reprodyne_mark_frame();
 
+    double up;
+    reprodyne_open_scope(&up);
+    reprodyne_intercept_indeterminate(&up, "key", 42);
+    reprodyne_intercept_indeterminate(&up, "key", 42);
+
+    reprodyne_serialize(&up, "ee", "ffff");
+
+    reprodyne_save(testDataPath);
+    reprodyne_play(testDataPath);
+    reprodyne_mark_frame();
+    reprodyne_open_scope(&up);
+
+    reprodyne_intercept_indeterminate(&up, "key", 42);
+    reprodyne_intercept_indeterminate(&up, "key", 42);
+
+    reprodyne_serialize(&up, "ee", "ffff");
+
+    reprodyne_assert_complete_read();
+
+    SUCCEED("If we made it this far it worked");
+}
+
+TEST_CASE("Validation and program tape different sizes, larger validation tape")
+{
+    reprodyne_record();
+    reprodyne_mark_frame();
+
+    double up;
+    reprodyne_open_scope(&up);
+    reprodyne_intercept_indeterminate(&up, "key", 42);
+
+    reprodyne_serialize(&up, "ee", "ffff");
+    reprodyne_serialize(&up, "ee", "ffff");
+
+    reprodyne_save(testDataPath);
+    reprodyne_play(testDataPath);
+    reprodyne_mark_frame();
+    reprodyne_open_scope(&up);
+
+    reprodyne_intercept_indeterminate(&up, "key", 42);
+
+    reprodyne_serialize(&up, "ee", "ffff");
+    reprodyne_serialize(&up, "ee", "ffff");
+
+    reprodyne_assert_complete_read();
+
+    SUCCEED("If we made it this far it worked");
 }
 
 TEST_CASE("Graceful handling of saved file with no entries")
