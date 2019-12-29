@@ -74,7 +74,6 @@ TEST_CASE("woof")
 
         reprodyne_mark_frame();
     }
-
     SECTION("Correct interception")
     {
         int rescope2;
@@ -158,43 +157,6 @@ TEST_CASE("woof")
         {
             //Check da oophs code
             REQUIRE(oops.code == REPRODYNE_STAT_CALL_MISMATCH);
-        }
-    }
-    SECTION("Unregistered scope")
-    {
-        double up;
-
-        SECTION("Read indeterminate with bad scope")
-        {
-            try
-            {
-                reprodyne_intercept_indeterminate(&up, "bep", 3);
-                FAIL("Unregistered scope accepted in indeterminate read");
-            }
-            catch(const OopsieWhoopsie oops)
-            {
-                REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
-            }
-        }
-        SECTION("Write indeterminate with bad scope")
-        {
-            //...
-        }
-        SECTION("Serialize with bad scope")
-        {
-            //Oops
-        }
-        SECTION("Read stored call with bad scope")
-        {
-            try
-            {
-                reprodyne_serialize(&up, "bep", "");
-                FAIL("Unregistered scope accepted for serialize call");
-            }
-            catch(const OopsieWhoopsie oops)
-            {
-                REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
-            }
         }
     }
     SECTION("Incomplete program read")
@@ -288,7 +250,7 @@ TEST_CASE("Invalid scope key")
     reprodyne_save(testDataPath);
     reprodyne_play(testDataPath);
 
-    //TODO: make a test for this without these two lines. Whatever condition that is...
+    //TODO: make a test for this without these two lines. Whatever condition that is... Too busy to think r/n
     reprodyne_mark_frame();
     reprodyne_open_scope(&scope);
 
@@ -336,4 +298,77 @@ TEST_CASE("Incomplete program read takes precedence over incomplete validation r
 TEST_CASE("Validation and program tape different sizes")
 {
 
+}
+
+TEST_CASE("Graceful handling of saved file with no entries")
+{
+
+}
+
+TEST_CASE("Unregistered scope")
+{
+    int s;
+    reprodyne_record();
+    reprodyne_mark_frame();
+    reprodyne_open_scope(&s);
+
+    reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
+
+    double up;
+
+    SECTION("Write indeterminate with bad scope")
+    {
+        try
+        {
+            reprodyne_intercept_indeterminate(&up, "fj", 43);
+            FAIL("Unregistered scope accepted in indeterminate write");
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
+        }
+    }
+    SECTION("Serialize with bad scope")
+    {
+        try
+        {
+            reprodyne_serialize(&up, "fjfjfjasdfdas", "CEREAL");
+            FAIL("Unregistered scope accepted in serialize write");
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
+        }
+    }
+    SECTION("Reads")
+    {
+        reprodyne_save(testDataPath);
+        reprodyne_play(testDataPath);
+        reprodyne_mark_frame();
+
+        SECTION("Read indeterminate with bad scope")
+        {
+            try
+            {
+                reprodyne_serialize(&up, "bep", "fjfj");
+                FAIL("Unregistered scope accepted in indeterminate read");
+            }
+            catch(const OopsieWhoopsie oops)
+            {
+                REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
+            }
+        }
+        SECTION("Read stored call with bad scope")
+        {
+            try
+            {
+                reprodyne_serialize(&up, "bep", "");
+                FAIL("Unregistered scope accepted for serialize read");
+            }
+            catch(const OopsieWhoopsie oops)
+            {
+                REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
+            }
+        }
+    }
 }
