@@ -350,9 +350,6 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
         return;
     }
 
-    bool progTapeFailure = false;
-    bool validationTapeFailure = false;
-
     if(!coldTape->ordinalScopeTape()) return;
 
     for(int ordinalScope = 0; ordinalScope != coldTape->ordinalScopeTape()->size(); ++ordinalScope)
@@ -380,18 +377,20 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
             if(!compareReadPosToSize(readVal.programPos, keyedEntry->programTape()->size()))
             {
                 setErrString("Program");
-                progTapeFailure = true;
+                goto progTapeFailure;
             }
             if(!compareReadPosToSize(readVal.callPos, keyedEntry->validationTape()->size()))
             {
                 setErrString("Call");
-                validationTapeFailure = true;
+                goto validationTapeFailure;
             }
         }
     }
 
-    if(progTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
-    if(validationTapeFailure) playback_error_handler_wrapper(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
+    return;
+
+    progTapeFailure: playback_error_handler_wrapper(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
+    validationTapeFailure: playback_error_handler_wrapper(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
 }
 
 void reprodyne_do_not_call_this_function_directly_open_scope(void* ptr)
