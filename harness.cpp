@@ -13,6 +13,9 @@
 
 #include "lexcompare.h"
 
+//For 8 * 8 == 64 bit or enough for a 138,547,332 terrabyte file... Should be enough for everybody.
+const int fileSizeEncodingRegion = 8;
+
 static void reprodyne_default_playback_failure_handler(const int code, const char* msg);
 
 Reprodyne_playback_failure_handler playbackErrorHandler = &reprodyne_default_playback_failure_handler;
@@ -258,7 +261,6 @@ void reprodyne_do_not_call_this_function_directly_save(const char* path)
     }
 
 
-    std::ofstream file(path, std::ios_base::binary);
 
     std::vector<flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry>> ordinalScopeTape;
 
@@ -298,7 +300,27 @@ void reprodyne_do_not_call_this_function_directly_save(const char* path)
 
     builder.Finish(fbTapeContainer);
 
-    file.write(reinterpret_cast<char*>(builder.GetBufferPointer()), builder.GetSize());
+    const uint64_t flatBuffSize = builder.GetSize();
+    uint64_t compressedRegionSize = 0; //I just wanna make damn sure the upper bits are zeroed out.
+    compressedRegionSize = compressBound(fileSizeEncodingRegion + flatBuffSize);
+
+    std::vector<Bytef> outputBuffer(compressedRegionSize);
+
+    if(compress(&outputBuffer[fileSizeEncodingRegion],
+                &compressedRegionSize,
+                builder.GetBufferPointer(),
+                builder.GetSize())
+            != Z_OK)
+    {
+        logic_error_die("Some problem with zlib");
+    }
+
+    //compressedRegionSize is updated by compress, so now we store that information in the first
+    // (fileSizeEncodingRegion) bytes of the file for later use by uncompress.
+    for(int i = 0; i != fileSizeEncodingRegion; ++i) outputBuffer[i] = compressedRegionSize << i * 8;
+
+    std::ofstream(path, std::ios_base::binary).write(reinterpret_cast<char*>(&outputBuffer[0]),
+                                                     fileSizeEncodingRegion + compressedRegionSize);
 }
 
 void reprodyne_do_not_call_this_function_directly_play(const char* path)
@@ -306,8 +328,16 @@ void reprodyne_do_not_call_this_function_directly_play(const char* path)
     init(Mode::Play);
 
     std::ifstream file(path, std::ios_base::binary);
+    auto tempBuffer = std::vector<unsigned char>(std::istreambuf_iterator(file), {});
 
-    loadedBuffer = std::vector<unsigned char>(std::istreambuf_iterator(file), {});
+    if(tempBuffer.size() < fileSizeEncodingRegion) logic_error_die("Bad file"); //TODO FIXME XXX NOT SAFE
+
+    uint64_t compressedRegionSize;
+
+    for(int i = 0; i != fileSizeEncodingRegion; ++i)
+        compressedRegionSize = uint64_t(tempBuffer[i]) << i * 8 | compressedRegionSize;
+
+
 
     coldTape = reprodyne::GetTapeContainer(&loadedBuffer[0]);
 }
