@@ -13,8 +13,86 @@
 
 #include "lexcompare.h"
 
-//For 8 * 8 == 64 bit or enough for a 138,547,332 terrabyte file... Should be enough for everybody.
-const int fileSizeEncodingRegion = 8;
+namespace reprodyne
+{
+namespace FileFormat
+{
+
+//For 8 * 8 == 64 bit or enough for a 138,547,332 terrabyte file or versions... Should be enough for everybody.
+//Integers are stored little endian because I felt like it
+const int intSize = 8;
+
+//"x3th", encoded as ascii. Manually, because I don't trust locales.
+//Stored in file as big endian
+const int signatureOffset = 0;
+const int signatureSize = 4;
+const char fileSignature[signatureSize] = {0x78, 0x33, 0x74, 0x68};
+
+const int versionOffset = signatureOffset + signatureSize;
+const int versionSize = intSize;
+
+const int currentFileFormatVersion = 1; //Good thing we used a 64 bit integer for this
+
+const int uncompressedSizeOffset = versionOffset + versionSize;
+const int uncompressedSizeSize = intSize;
+
+const int compressedDataRegionOffset = uncompressedSizeOffset + uncompressedSizeSize;
+
+const int reservedRangeSize = compressedDataRegionOffset;
+
+uint64_t readInteger(unsigned char* pos)
+{
+    uint64_t ret = 0;
+    for(int i = 0; i != intSize; ++i) ret = uint64_t(pos[i]) << i * 8 | ret;
+    return ret;
+}
+
+void writeInteger(unsigned char* pos, const uint64_t val)
+{
+    for(int i = 0; i != intSize; ++i)
+        pos[i] = val >> i * 8;
+}
+
+void writeVersion(unsigned char* fileStart)
+{
+    writeInteger(&fileStart[versionOffset], currentFileFormatVersion);
+}
+
+bool checkVersion(unsigned char* fileStart)
+{
+    return readInteger(&fileStart[versionOffset]) == currentFileFormatVersion;
+}
+
+void writeSignature(unsigned char* fileStart)
+{
+    for(int i = 0; i != signatureSize; ++i)
+        fileStart[i] = fileSignature[i];
+}
+
+bool checkSignature(unsigned char* fileStart)
+{
+    const std::string savedSignature =  std::string(reinterpret_cast<char*>(fileStart), signatureSize) ;
+    const auto mySignature = std::string(&fileSignature[0], signatureSize);
+    return savedSignature == mySignature;
+}
+
+uint64_t readUncompressedSize(unsigned char* fileStart)
+{
+    return readInteger(&fileStart[uncompressedSizeOffset]);
+}
+
+void writeBoringStuffToReservedRegion(unsigned char* filesStart, const uint64_t uncompressedSize)
+{
+    writeSignature(filesStart);
+    writeVersion(filesStart);
+    writeInteger(&filesStart[uncompressedSizeOffset], uncompressedSize);
+}
+
+
+}//FileFormat
+}//reprodyne
+
+
 
 static void reprodyne_default_playback_failure_handler(const int code, const char* msg);
 
@@ -300,14 +378,14 @@ void reprodyne_do_not_call_this_function_directly_save(const char* path)
 
     builder.Finish(fbTapeContainer);
 
-    const uint64_t flatBuffSize = builder.GetSize();
-    uint64_t compressedRegionSize = 0; //I just wanna make damn sure the upper bits are zeroed out.
-    compressedRegionSize = compressBound(fileSizeEncodingRegion + flatBuffSize);
+    //0 because I wanna make sure the upper bits are zeroed.
+    uint64_t compressionRegionSize = 0 + compressBound(builder.GetSize());
+    std::vector<Bytef> outputBuffer(reprodyne::FileFormat::reservedRangeSize + compressionRegionSize);
 
-    std::vector<Bytef> outputBuffer(compressedRegionSize);
+    reprodyne::FileFormat::writeBoringStuffToReservedRegion(&outputBuffer[0], compressionRegionSize);
 
-    if(compress(&outputBuffer[fileSizeEncodingRegion],
-                &compressedRegionSize,
+    if(compress(&outputBuffer[reprodyne::FileFormat::compressedDataRegionOffset],
+                &compressionRegionSize,
                 builder.GetBufferPointer(),
                 builder.GetSize())
             != Z_OK)
@@ -315,29 +393,49 @@ void reprodyne_do_not_call_this_function_directly_save(const char* path)
         logic_error_die("Some problem with zlib");
     }
 
-    //compressedRegionSize is updated by compress, so now we store that information in the first
-    // (fileSizeEncodingRegion) bytes of the file for later use by uncompress.
-    for(int i = 0; i != fileSizeEncodingRegion; ++i) outputBuffer[i] = compressedRegionSize << i * 8;
-
-    std::ofstream(path, std::ios_base::binary).write(reinterpret_cast<char*>(&outputBuffer[0]),
-                                                     fileSizeEncodingRegion + compressedRegionSize);
+    //compressionRegionSize is updated by compress
+    const int finalFileSize = reprodyne::FileFormat::reservedRangeSize + compressionRegionSize;
+    std::ofstream(path, std::ios_base::binary).write(reinterpret_cast<char*>(&outputBuffer[0]), finalFileSize);
 }
 
 void reprodyne_do_not_call_this_function_directly_play(const char* path)
 {
     init(Mode::Play);
 
-    std::ifstream file(path, std::ios_base::binary);
-    auto tempBuffer = std::vector<unsigned char>(std::istreambuf_iterator(file), {});
+    {
+        std::ifstream file(path, std::ios_base::binary);
+        auto tempBuffer = std::vector<unsigned char>(std::istreambuf_iterator(file), {});
 
-    if(tempBuffer.size() < fileSizeEncodingRegion) logic_error_die("Bad file"); //TODO FIXME XXX NOT SAFE
+        if(tempBuffer.size() < reprodyne::FileFormat::reservedRangeSize)
+            logic_error_die("Bad file, too small to even hold the reserved region...");
 
-    uint64_t compressedRegionSize;
+        if(!reprodyne::FileFormat::checkSignature(&tempBuffer[0]))
+            logic_error_die("Unrecognized file signature.");
 
-    for(int i = 0; i != fileSizeEncodingRegion; ++i)
-        compressedRegionSize = uint64_t(tempBuffer[i]) << i * 8 | compressedRegionSize;
+        if(!reprodyne::FileFormat::checkVersion(&tempBuffer[0]))
+            logic_error_die("File is not compatible with this version of reprodyne.");
 
+        uint64_t destBuffSize = reprodyne::FileFormat::readUncompressedSize(&tempBuffer[0]);
+        loadedBuffer = std::vector<unsigned char>(destBuffSize);
 
+        //READ MOTHERGUCGKer
+        const auto stat = uncompress(&loadedBuffer[0], &destBuffSize,
+                      &tempBuffer[reprodyne::FileFormat::compressedDataRegionOffset], tempBuffer.size() - reprodyne::FileFormat::reservedRangeSize)
+                        ;
+
+        if(stat == Z_MEM_ERROR)
+        {
+            logic_error_die("Not enough memory for zlib.");
+        }
+        if(stat == Z_BUF_ERROR)
+        {
+            logic_error_die("Data corrupt or incomplete.");
+        }
+        if(stat != Z_OK)
+        {
+            logic_error_die("Some unknown error occurred during decompression.");
+        }
+    }
 
     coldTape = reprodyne::GetTapeContainer(&loadedBuffer[0]);
 }
@@ -358,6 +456,9 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
 
         for(auto keyedEntry : *coldTape->ordinalScopeTape()->Get(ordinalScope)->keyedScopeTape())
         {
+            //These have non-trivial destructors, so we have to ensure that they fall out of scope before
+            // failing. TODO: This might change, if LastReadKey gets an integer instead of a string
+            // for it's key value.
             const LastReadKey readKey = {ordinalScope, keyedEntry->key()->str()};
             const LastReadVal readVal = lastRead[readKey];
 
@@ -388,7 +489,6 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
     }
 
     return;
-
     progTapeFailure: playback_error_handler_wrapper(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
     validationTapeFailure: playback_error_handler_wrapper(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, jumpSafeString.c_str());
 }

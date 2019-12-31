@@ -267,34 +267,6 @@ TEST_CASE("Invalid scope key")
     }
 }
 
-TEST_CASE("Incomplete program read takes precedence over incomplete validation read")
-{
-    reprodyne_record();
-    reprodyne_mark_frame();
-    int scope;
-
-    reprodyne_open_scope(&scope);
-
-    reprodyne_intercept_indeterminate(&scope, "n", 42);
-    reprodyne_serialize(&scope, "fjf", "ayeayeayeayeohh");
-
-    reprodyne_save(testDataPath);
-    reprodyne_play(testDataPath);
-
-    reprodyne_set_playback_failure_handler(&code_gobbling_error_handler);
-
-    try
-    {
-        reprodyne_assert_complete_read();
-        FAIL("assert complete read is just flat out fucking up");
-    }
-    catch(const OopsieWhoopsie oops)
-    {
-        //As opposed to call tape
-        REQUIRE(oops.code == REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ);
-    }
-}
-
 TEST_CASE("Validation and program tape different sizes, larger program tape")
 {
     reprodyne_record();
