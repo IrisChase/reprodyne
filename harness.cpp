@@ -419,22 +419,14 @@ void reprodyne_do_not_call_this_function_directly_play(const char* path)
         loadedBuffer = std::vector<unsigned char>(destBuffSize);
 
         //READ MOTHERGUCGKer
-        const auto stat = uncompress(&loadedBuffer[0], &destBuffSize,
-                      &tempBuffer[reprodyne::FileFormat::compressedDataRegionOffset], tempBuffer.size() - reprodyne::FileFormat::reservedRangeSize)
-                        ;
+        const int compressedRegionSize = tempBuffer.size() - reprodyne::FileFormat::reservedRangeSize;
+        const auto stat =
+                uncompress(&loadedBuffer[0], &destBuffSize,
+                           &tempBuffer[reprodyne::FileFormat::compressedDataRegionOffset], compressedRegionSize);
 
-        if(stat == Z_MEM_ERROR)
-        {
-            logic_error_die("Not enough memory for zlib.");
-        }
-        if(stat == Z_BUF_ERROR)
-        {
-            logic_error_die("Data corrupt or incomplete.");
-        }
-        if(stat != Z_OK)
-        {
-            logic_error_die("Some unknown error occurred during decompression.");
-        }
+        if(stat == Z_MEM_ERROR) logic_error_die("Not enough memory for zlib.");
+        if(stat == Z_BUF_ERROR) logic_error_die("Data corrupt or incomplete.");
+        if(stat != Z_OK) logic_error_die("Some unknown error occurred during decompression.");
     }
 
     coldTape = reprodyne::GetTapeContainer(&loadedBuffer[0]);
