@@ -456,7 +456,7 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
             auto setErrString = [&](const std::string type)
             {
                 jumpSafeString = type;
-                jumpSafeString += "tape was not read to completion for scope key: ";
+                jumpSafeString += " tape was not read to completion for scope key: ";
                 jumpSafeString += readKey.subscopeKey;
                 jumpSafeString.push_back('\n');
             };
