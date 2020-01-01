@@ -39,7 +39,7 @@ add_dependencies(reprodyne generated_code)
 
 install(TARGETS reprodyne EXPORT reprodyne
         ARCHIVE
-            DESTINATION lib/reprodyne1
+            DESTINATION lib/reprodyne1 #reprodyne MAJOR_VERSION...
         PUBLIC_HEADER
             DESTINATION include/reprodyne1)
 

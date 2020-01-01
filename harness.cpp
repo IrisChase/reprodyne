@@ -23,7 +23,6 @@ namespace FileFormat
 const int intSize = 8;
 
 //"x3th", encoded as ascii. Manually, because I don't trust locales.
-//Stored in file as big endian
 const int signatureOffset = 0;
 const int signatureSize = 4;
 const char fileSignature[signatureSize] = {0x78, 0x33, 0x74, 0x68};
@@ -31,7 +30,7 @@ const char fileSignature[signatureSize] = {0x78, 0x33, 0x74, 0x68};
 const int versionOffset = signatureOffset + signatureSize;
 const int versionSize = intSize;
 
-const int currentFileFormatVersion = 1; //Good thing we used a 64 bit integer for this
+const int currentFileFormatVersion = 0x01; //Good thing we used a 64 bit integer for this
 
 const int uncompressedSizeOffset = versionOffset + versionSize;
 const int uncompressedSizeSize = intSize;
