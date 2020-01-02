@@ -1,10 +1,11 @@
 # Reprodyne
-Reprodyne is an Apache 2 licensed C/C++ library with the purpose of transforming non-deterministic funtions into deterministic ones, and serializing output from them for testing. This is done by "intercepting" indeterminate values in record mode, resupplying them in playback mode, and comparing the saved serialized outputs to the live ones.
+At least generally, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. Reprodyne is an Apache 2 licensed C/C++ library designed to capture real world test data and integrate it into automated test suites.
 
-The design philosophy is that, at least generally, real world data is both easier and faster to generate and save, and more useful to test against, than mocks. This affords you the benefits (immediacy and simplicity) of manual testing, with the number one advantage of automated testing (namely, automation...).
+Reprodyne works by transforming non-deterministic funtions into deterministic ones, and serializing output from them for testing. This is done by "intercepting" indeterminate values in record mode, resupplying them in playback mode, and comparing the saved serialized outputs to the live ones.
 
 Reprodyne is not meant to *replace* your current preferred test framework, but rather to augment it's capabilities.
 
+The granularity of the tests is up to you, while I personally favor higher level end-to-end testing, Reprodyne should work perfectly well regardless of test scope.
 
 
 # Build/Install
@@ -33,6 +34,8 @@ blah blah bla
 # Usage A.K.A. not so brief
 Reprodyne allows you to "intercept" indeterminate values (System events, network packets, time values, etc), serialize function calls utilizing this data, and then save to "tape". In playback mode, the indeterminates are then fed back into the functions in the order that they were originally created, and the serialized calls are then compared to the saved ones to ensure that the functions are behaving as before.
 
+
+
 ## A trivial Example
 (maybe delete the above paragraph)
 
@@ -49,9 +52,20 @@ The header is safe to use without linking against the library as long as the swi
 
 ## Scopes, Frames and Subkeys oh my!
 
-dit dot dit
+Data in Reprodyne is aligned by the combination of the the current *frame*, *scope*, and *subkey*.
 
-More detailed explanation of it.
+The frame is hard to describe god damn it.
+
+A lot of functions in a given frame don't have to be called in order, they just all have to be called during the frame, and the frame has to return a given output. If we required every single interception to be called in the same order that it was when the test data was generated, you would lose a ton of flexibility in refactoring. So, we don't do that. Instead, each call to intercept or serialize has a scope and a subkey, which identifies a specific tape, and the reading of this tape ignores the current read status of all the other tapes. All data in a tape that is aligned to a given frame has to be read before data aligned to the next frame can be read out; attempts to read data that belongs to the previous frame triggers a playback failure.
+
+A scope is a void pointer, meant to point to identify some resource allocated in a deterministic order. It's a bit hard to explain conceptually, so just realize it's usually something like a "this" pointer in C++, which identifies the object currently making intercept and or serialize calls. The order of allocation is important because it is used to identify the same object from multiple runs.
+
+If you don't have a object to bind the tapes to, then you can just pass a null pointer.
+
+open\_scope "shadows" duplicate pointers, i.e. if you call it twice with the same pointer, all the data that was written to the previous version of the scope will be preserved, but will be effectively locked from being written to anymore. This is to protect you in case you've deallocated a resource, and by a stroke of bad luck get the same pointer address for a new version of the same *kind* of resource.
+
+Subkeys aren't strictly necessary to make reprodyne work, but it's nice to be able to declare different streams of indeterminates in a given object as idempotent; again, this affords you flexibility in refactoring.
+
 
 
 ## Custom playback failure handling and exception/longjmp safety
@@ -59,7 +73,21 @@ I can guarantee that during a playback failure, that it is safe to longjmp out o
 
 I can also guarantee that it's safe to throw a C++ exception out of the custom playback handler, provided that the library is ABI compatible with the executable it is being linked against, or at the very least, that the exception can safely pass through it without causing a fuss (The code paths calling the playback failure handler do not contain any try/catch blocks).
 
-*Unless I have a bad day or something
+\*Unless I have a bad day or something
+
+## Tips for effective use
+
+You want to avoid causing Reprodyne to regard idempotent calls as non-idempotent, causing a call mismatch in playback mode if you happen to change the order of things or if the order is non-deterministic to begin with. This is what scopes and subkeys are for, they provide indepedent tapes, aligned to the current frame, with which to validate in any order (Again, as long as it's aligned to the current *frame*).
+
+You want to wait until the last minute to serialize calls to give your code flexibility in change without invalidating tests. Remember, scope keys aren't for debug information per se, they're for idempotency. Don't use several sub-keys for effectively identical operations that propogate from different regions, all the serialize calls are for is to make sure that the *output* of the program is identical! It doesn't matter how we got there, just that the result is the same, and if the serialized calls rely too much on a particular code path, then you lose the flexibility to change the path to the destination.
+
+## Ideas for integration
+
+The laziest way is to just inject reprodyne calls into your functions as needed, to track the indeterminate values and calls.
+
+Of course, there is nothing stopping you from using reprodyne as a backend for a mock. The mocks could be injected in either mode and provide the interception and call matching opaquely to the rest of the application.
+
+How you choose to integrate Reprodyne is a matter of style and design philosophy. I'm generally too lazy for mocks, but you should do what you think is right for your project.
 
 
 # Contributing
