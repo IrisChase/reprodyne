@@ -16,12 +16,26 @@ table CallEntry
     call:string;
 }
 
+table VideoTape
+{
+    //Subracted from the current frame to match up to the current video frame
+    frameOffset:[uint];
+
+    data:[byte];
+    width:[uint];
+    height:[uint];
+    codec:[string];
+}
+
 table KeyedScopeTapeEntry
 {
     key:string (key);
 
     programTape: [IndeterminateEntry];
     validationTape: [CallEntry];
+
+    //A change in resolution advances to the next tape.
+    ordinalVideoTapes:[VideoTape];
 }
 
 table OrdinalScopeTapeEntry
@@ -32,8 +46,6 @@ table OrdinalScopeTapeEntry
 table TapeContainer
 {
     ordinalScopeTape:[OrdinalScopeTapeEntry];
-
-    //Need playback history...
 }
 
 root_type TapeContainer;

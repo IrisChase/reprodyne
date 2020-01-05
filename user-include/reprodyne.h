@@ -43,6 +43,7 @@ typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* ms
 #define reprodyne_intercept_indeterminate(scope, key, val) reprodyne_do_not_call_this_function_directly_intercept_indeterminate(scope, key, val)
 
 #define reprodyne_serialize(scope, key, call) reprodyne_do_not_call_this_function_directly_serialize(scope, key, call)
+#define reprodyne_serialize_video_frame(scope, key, width, height, stride, bytes)
 
 
 /*-------------------------------Implementation junk beyond this point-------------------------------*/
@@ -70,6 +71,13 @@ double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void
 
 void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const char* key, const char* cereal);
 
+void reprodyne_do_not_call_this_function_directly_serialize_video_frame(void* scope,
+                                                                        const char* key,
+                                                                        const int width,
+                                                                        const int height,
+                                                                        const int stride,
+                                                                        void* bytes);
+
 } //extern "C"
 
 #else
@@ -95,6 +103,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const c
 #define reprodyne_intercept_indeterminate(scope, key, val) val
 
 #define reprodyne_serialize(scope, key, call)
+#define reprodyne_serialize_video_frame(scope, key, width, height, stride, bytes)
 
 
 #endif //REPRODYNE_AVAILABLE

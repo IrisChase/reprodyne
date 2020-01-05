@@ -8,6 +8,8 @@
 
 #include <zlib.h>
 
+#include <libavcodec/avcodec.h>
+
 #include "schema_generated.h"
 #include "user-include/reprodyne.h"
 
@@ -116,10 +118,21 @@ flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
 typedef std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> LiveIndeterminateTape;
 typedef std::vector<flatbuffers::Offset<reprodyne::CallEntry>> LiveCallTape;
 
+struct LiveVideoTapeEntry
+{
+    std::string codec;
+    std::vector<unsigned char> data;
+    unsigned int width;
+    unsigned int height;
+};
+
+typedef std::vector<LiveVideoTapeEntry> LiveOrdinalVideoTapes;
+
 struct LiveKeyedScopeEntry
 {
     LiveIndeterminateTape programTape;
     LiveCallTape validationTape;
+    LiveOrdinalVideoTapes videoTape;
 };
 
 typedef std::map<std::string, LiveKeyedScopeEntry> LiveKeyedScopeMap;
@@ -140,6 +153,10 @@ struct LastReadVal
 {
     std::optional<int> programPos;
     std::optional<int> callPos;
+
+    //Just the straight frame id, regardless of what we're actually reading.
+    //Video tape uses it directly.
+    std::optional<int> frameId;
 };
 
 //TODO: I think a hash would be faster here because there are more reads than writes.
@@ -582,6 +599,19 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scopePtr, cons
         }
     }
     else logic_error_die("Mode corrupt or not set somehow.");
+}
+
+void reprodyne_do_not_call_this_function_directly_serialize_video_frame(void* scope,
+                                                                        const char* key,
+                                                                        const int width,
+                                                                        const int height,
+                                                                        const int stride,
+                                                                        void* bytes)
+{
+    if(readMode() == Mode::Record)
+    {
+
+    }
 }
 
 } //extern "C"

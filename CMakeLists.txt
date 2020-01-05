@@ -17,7 +17,15 @@ target_compile_definitions(reprodyne PUBLIC REPRODYNE_AVAILABLE)
 find_package(ZLIB REQUIRED)
 find_package(Flatbuffers REQUIRED)
 find_package(Catch2)
+
+find_library(AVCODEC_LIB avcodec)
+
+if(NOT AVCODEC_LIB)
+    message(FATAL_ERROR "Could not locate ffmpeg's avcodec library!")
+endif()
+
 target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
+target_link_libraries(reprodyne ${AVCODEC_LIB})
 
 
 if(DEFINED Catch2_FOUND)
