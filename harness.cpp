@@ -12,19 +12,46 @@
 
 #include "schema_generated.h"
 #include "user-include/reprodyne.h"
-#include "internalexceptions.h"
 #include "fileformat.h"
 #include "liverecording.h"
 
 #include "lexcompare.h"
 
-
 static void reprodyne_default_playback_failure_handler(const int code, const char* msg);
 
 Reprodyne_playback_failure_handler playbackErrorHandler = &reprodyne_default_playback_failure_handler;
 
-reprodyne::Live liveData;
+namespace reprodyne
+{
 
+class EmptyTape : public std::exception {};
+
+}
+
+
+
+typedef std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> LiveIndeterminateTape;
+typedef std::vector<flatbuffers::Offset<reprodyne::CallEntry>> LiveCallTape;
+
+struct LiveVideoTapeEntry
+{
+    std::string codec;
+    std::vector<unsigned char> data;
+    unsigned int width;
+    unsigned int height;
+};
+
+typedef std::vector<LiveVideoTapeEntry> LiveOrdinalVideoTapes;
+
+struct LiveKeyedScopeEntry
+{
+    LiveIndeterminateTape programTape;
+    LiveCallTape validationTape;
+    LiveOrdinalVideoTapes videoTape;
+};
+
+typedef std::map<std::string, LiveKeyedScopeEntry> LiveKeyedScopeMap;
+typedef std::vector<LiveKeyedScopeMap> LiveOrdinalScopeTape;
 
 struct LastReadKey
 {
@@ -44,19 +71,15 @@ struct LastReadVal
     std::optional<int> frameId;
 };
 
-enum class Mode
-{
-    Record,
-    Play,
-};
 
+std::map<void*, int> scopePtrToOrdinalMap;
 std::optional<int> frameCounter;
 std::vector<unsigned char> loadedBuffer;
+
 std::string jumpSafeString;
+
 flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
 LiveOrdinalScopeTape liveTape;
-std::map<void*, int> scopePtrToOrdinalMap;
-
 //TODO: I think a hash would be faster here because there are more reads than writes.
 //TODO: "LookupByKey" doesn't give us an offset into the vector at all, it's a black box.
 //      If this proves to be a bottle kneck, then the only reasonable solution is to perform
@@ -64,8 +87,13 @@ std::map<void*, int> scopePtrToOrdinalMap;
 //      instead of "subscopeKey", but in the spirit of no premature optimization...
 std::map<LastReadKey, LastReadVal> lastRead;
 const reprodyne::TapeContainer* coldTape = nullptr;
-std::optional<Mode> currentMode;
 
+enum class Mode
+{
+    Record,
+    Play,
+};
+std::optional<Mode> currentMode;
 
 static void reprodyne_default_playback_failure_handler(const int code, const char* msg)
 {
