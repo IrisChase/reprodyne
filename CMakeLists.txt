@@ -15,6 +15,14 @@ state.cpp
 harness.cpp
 liverecording.h
 liverecording.cpp
+indeterminate.h
+indeterminate.cpp
+callserial.h
+callserial.cpp
+video.h
+video.cpp
+tapemode.h
+tapemode.cpp
 )
 
 set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne.h")
