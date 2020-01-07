@@ -12,134 +12,19 @@
 
 #include "schema_generated.h"
 #include "user-include/reprodyne.h"
+#include "internalexceptions.h"
+#include "fileformat.h"
+#include "liverecording.h"
 
 #include "lexcompare.h"
-
-namespace reprodyne
-{
-namespace FileFormat
-{
-
-//For 8 * 8 == 64 bit or enough for a 138,547,332 terrabyte file or versions... Should be enough for everybody.
-//Integers are stored little endian because I felt like it
-const int intSize = 8;
-
-//"x3th", encoded as ascii. Manually, because I don't trust locales.
-const int signatureOffset = 0;
-const int signatureSize = 4;
-const char fileSignature[signatureSize] = {0x78, 0x33, 0x74, 0x68};
-
-const int versionOffset = signatureOffset + signatureSize;
-const int versionSize = intSize;
-
-const int currentFileFormatVersion = 0x01; //Good thing we used a 64 bit integer for this
-
-const int uncompressedSizeOffset = versionOffset + versionSize;
-const int uncompressedSizeSize = intSize;
-
-const int compressedDataRegionOffset = uncompressedSizeOffset + uncompressedSizeSize;
-
-const int reservedRangeSize = compressedDataRegionOffset;
-
-uint64_t readInteger(unsigned char* pos)
-{
-    uint64_t ret = 0;
-    for(int i = 0; i != intSize; ++i) ret = uint64_t(pos[i]) << i * 8 | ret;
-    return ret;
-}
-
-void writeInteger(unsigned char* pos, const uint64_t val)
-{
-    for(int i = 0; i != intSize; ++i)
-        pos[i] = val >> i * 8;
-}
-
-void writeVersion(unsigned char* fileStart)
-{
-    writeInteger(&fileStart[versionOffset], currentFileFormatVersion);
-}
-
-bool checkVersion(unsigned char* fileStart)
-{
-    return readInteger(&fileStart[versionOffset]) == currentFileFormatVersion;
-}
-
-void writeSignature(unsigned char* fileStart)
-{
-    for(int i = 0; i != signatureSize; ++i)
-        fileStart[i] = fileSignature[i];
-}
-
-bool checkSignature(unsigned char* fileStart)
-{
-    const std::string savedSignature =  std::string(reinterpret_cast<char*>(fileStart), signatureSize) ;
-    const auto mySignature = std::string(&fileSignature[0], signatureSize);
-    return savedSignature == mySignature;
-}
-
-uint64_t readUncompressedSize(unsigned char* fileStart)
-{
-    return readInteger(&fileStart[uncompressedSizeOffset]);
-}
-
-void writeBoringStuffToReservedRegion(unsigned char* filesStart, const uint64_t uncompressedSize)
-{
-    writeSignature(filesStart);
-    writeVersion(filesStart);
-    writeInteger(&filesStart[uncompressedSizeOffset], uncompressedSize);
-}
-
-
-}//FileFormat
-}//reprodyne
-
 
 
 static void reprodyne_default_playback_failure_handler(const int code, const char* msg);
 
 Reprodyne_playback_failure_handler playbackErrorHandler = &reprodyne_default_playback_failure_handler;
 
-namespace reprodyne
-{
+reprodyne::Live liveData;
 
-class EmptyTape : public std::exception {};
-
-}
-
-std::map<void*, int> scopePtrToOrdinalMap;
-std::optional<int> frameCounter;
-std::vector<unsigned char> loadedBuffer;
-
-std::string jumpSafeString;
-
-flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
-
-
-typedef std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> LiveIndeterminateTape;
-typedef std::vector<flatbuffers::Offset<reprodyne::CallEntry>> LiveCallTape;
-
-struct LiveVideoTapeEntry
-{
-    std::string codec;
-    std::vector<unsigned char> data;
-    unsigned int width;
-    unsigned int height;
-};
-
-typedef std::vector<LiveVideoTapeEntry> LiveOrdinalVideoTapes;
-
-struct LiveKeyedScopeEntry
-{
-    LiveIndeterminateTape programTape;
-    LiveCallTape validationTape;
-    LiveOrdinalVideoTapes videoTape;
-};
-
-typedef std::map<std::string, LiveKeyedScopeEntry> LiveKeyedScopeMap;
-typedef std::vector<LiveKeyedScopeMap> LiveOrdinalScopeTape;
-
-
-LiveOrdinalScopeTape liveTape;
 
 struct LastReadKey
 {
@@ -159,6 +44,19 @@ struct LastReadVal
     std::optional<int> frameId;
 };
 
+enum class Mode
+{
+    Record,
+    Play,
+};
+
+std::optional<int> frameCounter;
+std::vector<unsigned char> loadedBuffer;
+std::string jumpSafeString;
+flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
+LiveOrdinalScopeTape liveTape;
+std::map<void*, int> scopePtrToOrdinalMap;
+
 //TODO: I think a hash would be faster here because there are more reads than writes.
 //TODO: "LookupByKey" doesn't give us an offset into the vector at all, it's a black box.
 //      If this proves to be a bottle kneck, then the only reasonable solution is to perform
@@ -166,12 +64,6 @@ struct LastReadVal
 //      instead of "subscopeKey", but in the spirit of no premature optimization...
 std::map<LastReadKey, LastReadVal> lastRead;
 const reprodyne::TapeContainer* coldTape = nullptr;
-
-enum class Mode
-{
-    Record,
-    Play,
-};
 std::optional<Mode> currentMode;
 
 

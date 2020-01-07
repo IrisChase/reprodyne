@@ -8,7 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(reprodyne
 user-include/reprodyne.h
 schema_generated.h
+state.h
+internalexceptions.h
+fileformat.h
+state.cpp
 harness.cpp
+liverecording.h
+liverecording.cpp
 )
 
 set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne.h")
