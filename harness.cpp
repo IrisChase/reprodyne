@@ -13,21 +13,12 @@
 #include "schema_generated.h"
 #include "user-include/reprodyne.h"
 #include "fileformat.h"
-#include "liverecording.h"
 
 #include "lexcompare.h"
 
 static void reprodyne_default_playback_failure_handler(const int code, const char* msg);
 
 Reprodyne_playback_failure_handler playbackErrorHandler = &reprodyne_default_playback_failure_handler;
-
-namespace reprodyne
-{
-
-class EmptyTape : public std::exception {};
-
-}
-
 
 
 typedef std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> LiveIndeterminateTape;
@@ -104,7 +95,7 @@ static void reprodyne_default_playback_failure_handler(const int code, const cha
 static void playback_error_handler_wrapper(const int code, const char* msg)
 {
     playbackErrorHandler(code, msg);
-    std::terminate(); //If you do it I will.
+    std::terminate(); //If you do it I will
 }
 
 static void error_tape_empty_for_key(const char* prefix, const char* key)

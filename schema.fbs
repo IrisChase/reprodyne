@@ -31,6 +31,11 @@ table KeyedScopeTapeEntry
     videoTape:[VideoFrameEntry];
 }
 
+table OrdinalScopeTapeEntry
+{
+    keyedScopeTape: [KeyedScopeTapeEntry];
+}
+
 table VideoTape
 {
     //Subracted from the current frame to match up to the current video frame
@@ -40,11 +45,6 @@ table VideoTape
     width:[uint];
     height:[uint];
     codec:[string];
-}
-
-table OrdinalScopeTapeEntry
-{
-    keyedScopeTape: [KeyedScopeTapeEntry];
 }
 
 table TapeContainer

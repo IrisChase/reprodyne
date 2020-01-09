@@ -1,37 +1,136 @@
 #pragma once
 
-#include "indeterminate.h"
-#include "callserial.h"
-#include "video.h"
+#include <vector>
+#include <string>
+#include <optional>
+#include <map>
+
+#include "user-include/reprodyne.h"
+#include "schema_generated.h"
+
+#include "lexcompare.h"
 
 namespace reprodyne
 {
 
-class LiveTape
+class EmptyTape : public std::exception {};
+
+struct Program;
+
+//indeterminate.cpp
+double recordIndeterminate(Program* com, void* scope, const char* key, const double val);
+double playIndeterminate(Program* com, void* scope, const char* key, const double val);
+
+//callserial.cpp
+void recordSerialCall(Program* com, void* scope, const char* key, const char* call);
+void validateSerialCall(Program* com, void* scope, const char* key, const char* call);
+
+
+
+struct Program
 {
-public:
-    virtual double intercept_indeterminate();
+    static Reprodyne_playback_failure_handler playbackErrorHandler;
+
+
+    typedef std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> LiveIndeterminateTape;
+    typedef std::vector<flatbuffers::Offset<reprodyne::CallEntry>> LiveCallTape;
+
+    struct LiveVideoTapeEntry
+    {
+        std::string codec;
+        std::vector<unsigned char> data;
+        unsigned int width;
+        unsigned int height;
+    };
+
+    typedef std::vector<LiveVideoTapeEntry> LiveOrdinalVideoTapes;
+
+    struct LiveKeyedScopeEntry
+    {
+        LiveIndeterminateTape programTape;
+        LiveCallTape validationTape;
+        LiveOrdinalVideoTapes videoTape;
+    };
+
+    typedef std::map<std::string, LiveKeyedScopeEntry> LiveKeyedScopeMap;
+    typedef std::vector<LiveKeyedScopeMap> LiveOrdinalScopeTape;
+
+    struct LastReadKey
+    {
+        int scopeOffset;
+        std::string subscopeKey;
+
+        IRISUTILS_DEFINE_COMP(LastReadKey, scopeOffset, subscopeKey)
+    };
+
+    struct LastReadVal
+    {
+        std::optional<int> programPos;
+        std::optional<int> callPos;
+
+        //Just the straight frame id, regardless of what we're actually reading.
+        //Video tape uses it directly.
+        std::optional<int> frameId;
+    };
+
+
+    std::map<void*, int> scopePtrToOrdinalMap;
+    std::optional<int> frameCounter;
+    std::vector<unsigned char> loadedBuffer;
+
+    std::string jumpSafeString;
+
+    flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
+    LiveOrdinalScopeTape liveTape;
+    //TODO: I think a hash would be faster here because there are more reads than writes.
+    //TODO: "LookupByKey" doesn't give us an offset into the vector at all, it's a black box.
+    //      If this proves to be a bottle kneck, then the only reasonable solution is to perform
+    //      a manual binary search on the flatbuffer vector, and store the offset in LastReadKey
+    //      instead of "subscopeKey", but in the spirit of no premature optimization...
+    std::map<LastReadKey, LastReadVal> lastRead;
+    const reprodyne::TapeContainer* coldTape = nullptr;
+
+    void playback_error_handler_wrapper(const int code, const char* msg);
+    void error_tape_empty_for_key(const char* prefix, const char* key);
+
+    void logic_error_die(const char* specifically = "Generic logic error.");
+    void warning(const char* msg);
+
+    int readScopeOrdinal(void* scopePtr);
+    int lastFrameId();
+
+    //Note! the "optionalOffset" parameter is a reference, this prevents it from leaking
+    // after a call to playback_error_hanlder_wrapper, it works because the reference is actually
+    // stored in the "lastRead" structure. Don't get clever and call this with anything else.
+    int readOffset(std::optional<int>& optionalOffset, const int tapeSize);
+
+    void assertFrameId(const int frameId, const char* moreSpecifically);
+    const reprodyne::KeyedScopeTapeEntry* readKeyedScopeTapeEntry(const int ordinalScopeOffset,
+                                                                  const char* subscopeKey,
+                                                                  const char* errPrefix);
+
+
+    //Mode specific
+    virtual double intercept_indeterminate(void*, const char*, const double) = 0;
 };
 
-class RecordTape : public LiveTape
+struct RecordTape : public Program
 {
-public:
-    double intercept_indeterminate() final
-    { recordIndeterminate(); }
+    double intercept_indeterminate(void* scope, const char* key, const double val) final
+    { return recordIndeterminate(this, scope, key, val); }
 };
 
-class PlayTape : public LiveTape
+struct PlayTape : public Program
 {
-public:
-    double intercept_indeterminate() final
-    { return playIndeterminate(); }
+    double intercept_indeterminate(void* scope, const char* key, const double val) final
+    { return playIndeterminate(this, scope, key, val); }
 };
 
 //Don't touch the indeterminates, just string serial and video.
-class RevalidateTape : public LiveTape
+struct RevalidateTape : public Program
 {
-public:
-
+    double intercept_indeterminate(void* scope, const char* key, const double val) final
+    { return playIndeterminate(this, scope, key, val); }
 };
 
 
