@@ -100,8 +100,9 @@ struct Program
     int lastFrameId();
 
     //Note! the "optionalOffset" parameter is a reference, this prevents it from leaking
-    // after a call to playback_error_hanlder_wrapper, it works because the reference is actually
-    // stored in the "lastRead" structure. Don't get clever and call this with anything else.
+    // after a call to playback_error_hanlder_wrapper, it works because the referenced value
+    // is actually stored in the "lastRead" structure.
+    //Don't get clever and call this with anything else.
     int readOffset(std::optional<int>& optionalOffset, const int tapeSize);
 
     void assertFrameId(const int frameId, const char* moreSpecifically);
@@ -109,29 +110,17 @@ struct Program
                                                                   const char* subscopeKey,
                                                                   const char* errPrefix);
 
+    //Same across all modes
+    void openScope(void* ptr);
+    void markFrame();
 
-    //Mode specific
-    virtual double intercept_indeterminate(void*, const char*, const double) = 0;
+    //Mode specific, specified in the various classes in modalprogram.h
+    virtual void save(const char* path) = 0;
+
+    virtual double intercept_indeterminate(void* scope, const char* key, const double val) = 0;
+    virtual void serializeCall(void* scope, const char* key, const char* call) = 0;
 };
 
-struct RecordTape : public Program
-{
-    double intercept_indeterminate(void* scope, const char* key, const double val) final
-    { return recordIndeterminate(this, scope, key, val); }
-};
-
-struct PlayTape : public Program
-{
-    double intercept_indeterminate(void* scope, const char* key, const double val) final
-    { return playIndeterminate(this, scope, key, val); }
-};
-
-//Don't touch the indeterminates, just string serial and video.
-struct RevalidateTape : public Program
-{
-    double intercept_indeterminate(void* scope, const char* key, const double val) final
-    { return playIndeterminate(this, scope, key, val); }
-};
 
 
 }//reprodyne

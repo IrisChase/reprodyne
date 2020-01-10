@@ -53,20 +53,15 @@ void reprodyne_do_not_call_this_function_directly_reset();
 
 void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(Reprodyne_playback_failure_handler handler);
 
-int reprodyne_do_not_call_this_function_directly_mode_record();
-int reprodyne_do_not_call_this_function_directly_mode_play();
-
-void reprodyne_do_not_call_this_function_directly_assert_complete_read();
-
 void reprodyne_do_not_call_this_function_directly_record();
 void reprodyne_do_not_call_this_function_directly_save(const char* path);
+
 void reprodyne_do_not_call_this_function_directly_play(const char* path);
+void reprodyne_do_not_call_this_function_directly_revalidate(const char* path);
 
 void reprodyne_do_not_call_this_function_directly_open_scope(void* scope);
 void reprodyne_do_not_call_this_function_directly_mark_frame();
 
-void reprodyne_do_not_call_this_function_directly_write_indeterminate(void* scope, const char* key, double val);
-double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* scope, const char* key);
 double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void* scope, const char* key, double val);
 
 void reprodyne_do_not_call_this_function_directly_serialize(void* scope, const char* key, const char* cereal);
@@ -77,6 +72,8 @@ void reprodyne_do_not_call_this_function_directly_serialize_video_frame(void* sc
                                                                         const int height,
                                                                         const int stride,
                                                                         void* bytes);
+
+void reprodyne_do_not_call_this_function_directly_assert_complete_read();
 
 } //extern "C"
 

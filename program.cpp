@@ -1,4 +1,4 @@
-#include "tapemode.h"
+#include "program.h"
 
 
 #include <iostream>
@@ -109,8 +109,6 @@ const KeyedScopeTapeEntry* Program::readKeyedScopeTapeEntry(const int ordinalSco
         error_tape_empty_for_key(errPrefix, subscopeKey);
     }
 }
-
-
 
 
 
