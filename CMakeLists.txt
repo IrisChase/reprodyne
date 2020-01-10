@@ -7,14 +7,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(reprodyne
 user-include/reprodyne.h
-schema_generated.h
+reprodyne.cpp
 fileformat.h
-harness.cpp
-program.h
-program.cpp
-modalprogram.h
-modalprogram.cpp
+state.h
+state.cpp
 
+schema_generated.h
 )
 
 set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne.h")

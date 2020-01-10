@@ -15,19 +15,13 @@ namespace reprodyne
 
 class EmptyTape : public std::exception {};
 
-struct Program;
+enum class Mode
+{
+    Record,
+    Play,
+};
 
-//indeterminate.cpp
-double recordIndeterminate(Program* com, void* scope, const char* key, const double val);
-double playIndeterminate(Program* com, void* scope, const char* key, const double val);
-
-//callserial.cpp
-void recordSerialCall(Program* com, void* scope, const char* key, const char* call);
-void validateSerialCall(Program* com, void* scope, const char* key, const char* call);
-
-
-
-struct Program
+class State
 {
     static Reprodyne_playback_failure_handler playbackErrorHandler;
 
@@ -90,6 +84,17 @@ struct Program
     std::map<LastReadKey, LastReadVal> lastRead;
     const reprodyne::TapeContainer* coldTape = nullptr;
 
+    std::optional<Mode> currentMode;
+
+public:
+    static void setPlaybackErrorHandler(Reprodyne_playback_failure_handler handler)
+    { playbackErrorHandler = handler; }
+
+    State() {}
+    State(const Mode mode): currentMode(mode) {}
+
+    Mode readMode();
+
     void playback_error_handler_wrapper(const int code, const char* msg);
     void error_tape_empty_for_key(const char* prefix, const char* key);
 
@@ -110,15 +115,18 @@ struct Program
                                                                   const char* subscopeKey,
                                                                   const char* errPrefix);
 
-    //Same across all modes
+    void writeIndeterminate(void* scopePtr, const char* key, const double indeterminate);
+    double readIndeterminate(void* scopePtr, const char* key);
+
+    void serializeCall(void* scopePtr, const char* subScopeKey, const char* call);
+    std::string readStoredCall(void* scope, const char* subscopeKey);
+
+
     void openScope(void* ptr);
     void markFrame();
-
-    //Mode specific, specified in the various classes in modalprogram.h
-    virtual void save(const char* path) = 0;
-
-    virtual double intercept_indeterminate(void* scope, const char* key, const double val) = 0;
-    virtual void serializeCall(void* scope, const char* key, const char* call) = 0;
+    void save(const char* path);
+    void load(const char* path);
+    void assertCompleteRead();
 };
 
 

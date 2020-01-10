@@ -15,13 +15,9 @@
 //If you believe lower case macros are evil... I'm sorry.
 //I just... I can't yell this much...
 
-#define reprodyne_reset() reprodyne_do_not_call_this_function_directly_reset()
-
 typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* msg);
-#define reprodyne_set_playback_failure_handler(handler) reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(handler)
 
-#define reprodyne_mode_play() reprodyne_do_not_call_this_function_directly_mode_play()
-#define reprodyne_mode_record() reprodyne_do_not_call_this_function_directly_mode_record()
+#define reprodyne_set_playback_failure_handler(handler) reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(handler)
 
 #define reprodyne_record() reprodyne_do_not_call_this_function_directly_record()
 #define reprodyne_save(path) reprodyne_do_not_call_this_function_directly_save(path)
@@ -49,7 +45,6 @@ typedef void(*Reprodyne_playback_failure_handler)(const int code, const char* ms
 /*-------------------------------Implementation junk beyond this point-------------------------------*/
 extern "C"
 {
-void reprodyne_do_not_call_this_function_directly_reset();
 
 void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(Reprodyne_playback_failure_handler handler);
 
@@ -78,8 +73,6 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read();
 } //extern "C"
 
 #else
-
-#define reprodyne_reset()
 
 #define reprodyne_set_playback_failure_handler(handler)
 
