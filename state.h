@@ -21,6 +21,104 @@ enum class Mode
     Play,
 };
 
+template<typename IndeterminateType>
+class Recorder
+{
+    std::vector<IndeterminateType> tape;
+
+public:
+    IndeterminateType record(const IndeterminateType indeterminate);
+};
+
+template<typename IndeterminateType>
+class Player
+{
+public:
+    IndeterminateType readNext();
+};
+
+class ScopeRecorder
+{
+    //Key is subscope key
+    std::map<std::string, Recorder<double>> theDubbles;
+    std::map<std::string, Recorder<int>> theInts;
+
+public:
+    double react(const char* subScopeKey, const double indeterminate)
+    { return theDubbles[subScopeKey].record(indeterminate); }
+
+    int react(const char* subScopeKey, const int indeterminate)
+    { return theInts[subScopeKey].record(indeterminate); }
+};
+
+class ScopePlayer
+{
+public:
+    double react(const char* subScopeKey, const double indeterminate);
+    int react(const char* subScopeKey, const int indeterminate);
+};
+
+template<typename T>
+class ScopeContainer
+{
+    std::vector<T> storedScope;
+    std::map<void*, int> ordinalMap;
+
+public:
+    void openScope(void* ptr)
+    {
+        storedScope.emplace_back();
+        ordinalMap[ptr] = storedScope.size() - 1;
+    }
+
+    T& at(void* ptr)
+    {
+        auto ordinalIterator = ordinalMap.find(ptr);
+        if(ordinalIterator == ordinalMap.end())
+        {
+            //todo: throw scope out of range
+            throw std::runtime_error("FIXME");
+        }
+
+        return storedScope.at(ordinalIterator->second);
+    }
+
+    std::vector<T> pop()
+    {
+        ordinalMap.clear();
+        return std::move(storedScope);
+    }
+};
+
+template<typename ScopeHandler>
+class Program
+{
+protected:
+    ScopeContainer<ScopeHandler> scopes;
+
+public:
+    void openScope(void* ptr)
+    { scopes.openScope(ptr); }
+
+    template<typename T>
+    T intercept(void* scopePtr, const char* subscopeKey, const T indeterminate)
+    { return scopes.at(scopePtr).react(subscopeKey, indeterminate); }
+};
+
+class ProgramRecorder : public Program<ScopeRecorder>
+{
+public:
+    void saveEtc(); //Accessing scope
+};
+
+class ProgramPlayer : public Program<ScopePlayer>
+{
+public:
+    void loadEtc();
+};
+
+
+
 class State
 {
     static Reprodyne_playback_failure_handler playbackErrorHandler;
