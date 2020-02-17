@@ -8,6 +8,10 @@
 #include "user-include/reprodyne.h"
 #include "schema_generated.h"
 
+#include <fstream>
+#include <zlib.h>
+#include "fileformat.h"
+
 #include "lexcompare.h"
 
 namespace reprodyne
@@ -21,47 +25,92 @@ enum class Mode
     Play,
 };
 
-template<typename IndeterminateType>
-class Recorder
+class ScopeHandlerRecorder
 {
-    std::vector<IndeterminateType> tape;
+    struct SubScopeEntry
+    {
+        template<typename T>
+        struct FrameIdValuePair
+        {
+            int frameId;
+            T val;
+        };
+
+        std::vector<FrameIdValuePair<double>> theDubbles;
+        std::vector<FrameIdValuePair<int>> theInts;
+        std::vector<FrameIdValuePair<std::string>> serialStrings;
+    };
+
+    std::map<std::string, SubScopeEntry> subScopes;
+
+    template<typename ContainerType, typename ValueType>
+    ValueType saveValue(ContainerType& cont, const int frameId, const ValueType val)
+    {
+        cont.emplace_back(frameId, val);
+        return cont.back().val;
+    }
 
 public:
-    IndeterminateType record(const IndeterminateType indeterminate);
+    double intercept(const int frameId, const char* subscopeKey, const double indeterminate)
+    { return saveValue(subScopes[subscopeKey].theDubbles, frameId, indeterminate); }
+
+    int intercept(const int frameId, const char* subscopeKey, const int indeterminate)
+    { return saveValue(subScopes[subscopeKey].theInts, frameId, indeterminate); }
+
+
+    void serialize(const int frameId, const char* subscopeKey, const char* val)
+    { subScopes[subscopeKey].serialStrings.emplace_back(frameId, val); }
+
+
+    flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry> buildOrdinalScopeFlatbuffer(flatbuffers::FlatBufferBuilder& builder)
+    {
+        std::vector<flatbuffers::Offset<reprodyne::KeyedScopeTapeEntry>> keyedEntries;
+        for(auto pair : subScopes)
+        {
+            const auto subScopeEntry = pair.second;
+            const auto subscopeKey   = builder.CreateString(pair.first);
+
+
+            std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> indeterminateEntries;
+            for(auto entry : subScopeEntry.theDubbles)
+                indeterminateEntries.push_back(reprodyne::CreateIndeterminateEntry(builder, entry.frameId, entry.val));
+
+            std::vector<flatbuffers::Offset<reprodyne::CallEntry>> callEntries;
+            for(auto entry : subScopeEntry.serialStrings)
+                callEntries.push_back(reprodyne::CreateCallEntry(builder, entry.frameId, builder.CreateString(entry.val)));
+
+
+
+            keyedEntries.push_back(reprodyne::CreateKeyedScopeTapeEntry(builder,
+                                                                        subscopeKey,
+                                                                        builder.CreateVector(indeterminateEntries),
+                                                                        builder.CreateVector(callEntries)));
+        }
+
+        return reprodyne::CreateOrdinalScopeTapeEntry(builder, builder.CreateVectorOfSortedTables(&keyedEntries));
+    }
 };
 
-template<typename IndeterminateType>
-class Player
+class ScopeHandlerPlayer
 {
 public:
-    IndeterminateType readNext();
-};
+    typedef const reprodyne::OrdinalScopeTapeEntry* BufferType;
 
-class ScopeRecorder
-{
-    //Key is subscope key
-    std::map<std::string, Recorder<double>> theDubbles;
-    std::map<std::string, Recorder<int>> theInts;
+private:
+    BufferType myBuffer;
 
 public:
-    double react(const char* subScopeKey, const double indeterminate)
-    { return theDubbles[subScopeKey].record(indeterminate); }
+    ScopeHandlerPlayer(BufferType buf): myBuffer(buf) {}
 
-    int react(const char* subScopeKey, const int indeterminate)
-    { return theInts[subScopeKey].record(indeterminate); }
+    double intercept(const char* subScopeKey, const double indeterminate);
+    int intercept(const char* subScopeKey, const int indeterminate);
+
+    void serialize(const char* subScopeKey, const char* val);
 };
 
-class ScopePlayer
+class ScopeContainerRecorder
 {
-public:
-    double react(const char* subScopeKey, const double indeterminate);
-    int react(const char* subScopeKey, const int indeterminate);
-};
-
-template<typename T>
-class ScopeContainer
-{
-    std::vector<T> storedScope;
+    std::vector<ScopeHandlerRecorder> storedScope;
     std::map<void*, int> ordinalMap;
 
 public:
@@ -71,7 +120,7 @@ public:
         ordinalMap[ptr] = storedScope.size() - 1;
     }
 
-    T& at(void* ptr)
+    ScopeHandlerRecorder& at(void* ptr)
     {
         auto ordinalIterator = ordinalMap.find(ptr);
         if(ordinalIterator == ordinalMap.end())
@@ -83,41 +132,157 @@ public:
         return storedScope.at(ordinalIterator->second);
     }
 
-    std::vector<T> pop()
+    std::vector<ScopeHandlerRecorder> pop()
     {
         ordinalMap.clear();
         return std::move(storedScope);
     }
 };
 
-template<typename ScopeHandler>
+class ScopeContainerPlayer
+{
+public:
+    typedef flatbuffers::Vector<flatbuffers::Offset<OrdinalScopeTapeEntry>> BufferType;
+
+private:
+    const BufferType* myRootBuffer;
+    BufferType::const_iterator ordinalPosition;
+
+    std::map<void*, ScopeHandlerPlayer> scopeMap;
+
+public:
+    void openScope(void *ptr)
+    {
+        if(ordinalPosition == myRootBuffer->end()) throw std::runtime_error("Ordinal scope buffer overread");
+
+        //TODO: assert the complete read before clobbering?
+        scopeMap[ptr] = ScopeHandlerPlayer(*ordinalPosition);
+        ++ordinalPosition;
+    }
+
+    ScopeHandlerPlayer& at(void* ptr)
+    {
+        auto it = scopeMap.find(ptr);
+        if(it == scopeMap.end()) throw std::runtime_error("Did not load buffers!");
+        return it->second;
+    }
+
+    void load(const BufferType* rootBeer)
+    {
+        myRootBuffer = rootBeer;
+        ordinalPosition = myRootBuffer->begin();
+    }
+};
+
+template<typename ScopeContainer>
 class Program
 {
+    std::optional<int> frameCounter;
+
 protected:
-    ScopeContainer<ScopeHandler> scopes;
+    ScopeContainer scopes;
 
 public:
     void openScope(void* ptr)
     { scopes.openScope(ptr); }
 
+    void markFrame()
+    {
+        if(!frameCounter) frameCounter = 0;
+        else ++(*frameCounter);
+    }
+
+    int readFrameId()
+    {
+        if(!frameCounter)
+            throw std::runtime_error("TODO: Make this exception proper.");
+        return *frameCounter;
+    }
+
     template<typename T>
     T intercept(void* scopePtr, const char* subscopeKey, const T indeterminate)
-    { return scopes.at(scopePtr).react(subscopeKey, indeterminate); }
+    { return scopes.at(scopePtr).intercept(readFrameId(), subscopeKey, indeterminate); }
+
+    template<typename T>
+    void serialize(void* scopePtr, const char* subscopeKey, const T serialValue)
+    { scopes.at(scopePtr).serialize(readFrameId(), subscopeKey, serialValue); }
 };
 
-class ProgramRecorder : public Program<ScopeRecorder>
+class ProgramRecorder : public Program<ScopeContainerRecorder>
 {
 public:
-    void saveEtc(); //Accessing scope
+    void save(const char* path)
+    {
+        flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
+        {
+            auto ordinalScopes = scopes.pop();
+
+            //TODO move to ScopeRecorder?
+            std::vector<flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry>> builtOrdinalEntries;
+            for(auto keyedScopeHandler : ordinalScopes)
+                    builtOrdinalEntries.push_back(keyedScopeHandler.buildOrdinalScopeFlatbuffer(builder));
+
+            builder.Finish(reprodyne::CreateTapeContainer(builder, builder.CreateVector(builtOrdinalEntries)));
+        }
+
+        //0 + to make damn sure the upper bits are zeroed
+        uint64_t compressionRegionSize = 0 + compressBound(builder.GetSize());
+        std::vector<Bytef> outputBuffer(reprodyne::FileFormat::reservedRangeSize + compressionRegionSize);
+
+        reprodyne::FileFormat::writeBoringStuffToReservedRegion(&outputBuffer[0], compressionRegionSize);
+
+        if(compress(&outputBuffer[reprodyne::FileFormat::compressedDataRegionOffset],
+                    &compressionRegionSize,
+                    builder.GetBufferPointer(),
+                    builder.GetSize())
+                != Z_OK) //Heard of A-okay? Yeah well this is like that but not really
+        {
+            throw std::runtime_error("Some problem with zlib");
+        }
+
+        const int finalFileSize = reprodyne::FileFormat::reservedRangeSize + compressionRegionSize;
+        std::ofstream(path, std::ios_base::binary).write(reinterpret_cast<char*>(&outputBuffer[0]), finalFileSize);
+    }
 };
 
-class ProgramPlayer : public Program<ScopePlayer>
+class ProgramPlayer : public Program<ScopeContainerPlayer>
 {
+    std::vector<unsigned char> loadedBuffer;
+
 public:
-    void loadEtc();
+    void load(const char* path)
+    {
+        std::ifstream file(path, std::ios_base::binary);
+        auto tempBuffer = std::vector<unsigned char>(std::istreambuf_iterator(file), {});
+
+        if(tempBuffer.size() < reprodyne::FileFormat::reservedRangeSize)
+            throw std::runtime_error("Bad file, too small to even hold the reserved region...");
+
+        if(!reprodyne::FileFormat::checkSignature(&tempBuffer[0]))
+            throw std::runtime_error("Unrecognized file signature.");
+
+        if(!reprodyne::FileFormat::checkVersion(&tempBuffer[0]))
+            throw std::runtime_error("File is not compatible with this version of reprodyne.");
+
+        uint64_t destBuffSize = reprodyne::FileFormat::readUncompressedSize(&tempBuffer[0]);
+        loadedBuffer = std::vector<unsigned char>(destBuffSize);
+
+        //READ MOTHERGUCGKer
+        const int compressedRegionSize = tempBuffer.size() - reprodyne::FileFormat::reservedRangeSize;
+        const auto stat =
+                uncompress(&loadedBuffer[0], &destBuffSize,
+                           &tempBuffer[reprodyne::FileFormat::compressedDataRegionOffset], compressedRegionSize);
+
+        if(stat == Z_MEM_ERROR) throw std::runtime_error("Not enough memory for zlib.");
+        if(stat == Z_BUF_ERROR) throw std::runtime_error("Data corrupt or incomplete.");
+        if(stat != Z_OK) throw std::runtime_error("Some unknown error occurred during decompression.");
+
+        scopes.load(reprodyne::GetTapeContainer(&loadedBuffer[0])->ordinalScopeTape());
+    }
 };
 
 
+//------------------------------------------------======================$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$4 old h-shit
 
 class State
 {

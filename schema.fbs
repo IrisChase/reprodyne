@@ -16,19 +16,12 @@ table CallEntry
     call:string;
 }
 
-table VideoFrameEntry
-{
-    frameId:int;
-    tapeOrdinal:int;
-}
-
 table KeyedScopeTapeEntry
 {
     key:string (key);
 
     programTape:[IndeterminateEntry];
     validationTape:[CallEntry];
-    videoTape:[VideoFrameEntry];
 }
 
 table OrdinalScopeTapeEntry
@@ -36,21 +29,9 @@ table OrdinalScopeTapeEntry
     keyedScopeTape: [KeyedScopeTapeEntry];
 }
 
-table VideoTape
-{
-    //Subracted from the current frame to match up to the current video frame
-    frameOffset:[uint];
-
-    data:[byte];
-    width:[uint];
-    height:[uint];
-    codec:[string];
-}
-
 table TapeContainer
 {
     ordinalScopeTape:[OrdinalScopeTapeEntry];
-    ordinalVideoTapes:[VideoTape];
 }
 
 root_type TapeContainer;
