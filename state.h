@@ -94,18 +94,64 @@ public:
 class ScopeHandlerPlayer
 {
 public:
-    typedef const reprodyne::OrdinalScopeTapeEntry* BufferType;
+    typedef const OrdinalScopeTapeEntry BufferType;
 
 private:
-    BufferType myBuffer;
+    BufferType* myBuffer;
+
+    struct LastReadPos
+    {
+        int indeterminateDoublePos = 0;
+        int serialStringPos = 0;
+    };
+
+    std::map<const void*, LastReadPos> readPosMap;
+
+    const KeyedScopeTapeEntry* getKeyedEntry(const char* subscopeKey)
+    {
+        auto entry = myBuffer->keyedScopeTape()->LookupByKey(subscopeKey);
+        if(!entry) throw std::runtime_error("sub scope not found");
+        return entry;
+    }
+
+    void checkReadPastEnd(const int size, const int pos)
+    { if(size == pos) throw std::runtime_error("Read past end"); }
+
+    void checkFrame(const int frameId1, const int frameId2)
+    { if(frameId1 != frameId2) throw std::runtime_error("Frame mismatch!"); }
 
 public:
-    ScopeHandlerPlayer(BufferType buf): myBuffer(buf) {}
+    ScopeHandlerPlayer(BufferType* buf): myBuffer(buf) {}
 
-    double intercept(const char* subScopeKey, const double indeterminate);
-    int intercept(const char* subScopeKey, const int indeterminate);
+    double intercept(const int frameId, const char* subscopeKey, const double indeterminate)
+    {
+        auto entry = getKeyedEntry(subscopeKey);
+        const auto ordinal = readPosMap[entry].indeterminateDoublePos++;
 
-    void serialize(const char* subScopeKey, const char* val);
+        checkReadPastEnd(entry->programTape()->size(), ordinal);
+
+        auto indeterminateEntry = entry->programTape()->Get(ordinal);
+
+        checkFrame(indeterminateEntry->frameId(), frameId);
+
+        return indeterminateEntry->val();
+    }
+
+    int intercept(const int frameId, const char* subscopeKey, const int indeterminate);
+
+    void serialize(const int frameId, const char* subscopeKey, const char* val)
+    {
+        auto entry = getKeyedEntry(subscopeKey);
+        const auto ordinal = readPosMap[entry].serialStringPos++;
+
+        checkReadPastEnd(entry->validationTape()->size(), ordinal);
+
+        auto serialEntry = entry->validationTape()->Get(ordinal);
+
+        checkFrame(serialEntry->frameId(), frameId);
+
+        if(std::string(val) != serialEntry->call()->str()) throw std::runtime_error("Serial call mismatch");
+    }
 };
 
 class ScopeContainerRecorder
