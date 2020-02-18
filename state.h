@@ -99,7 +99,7 @@ public:
     typedef const OrdinalScopeTapeEntry BufferType;
 
 private:
-    BufferType* myBuffer;
+    const BufferType* myBuffer;
 
     struct LastReadPos
     {
@@ -139,7 +139,7 @@ public:
         return indeterminateEntry->val();
     }
 
-    int intercept(const int frameId, const char* subscopeKey, const int indeterminate);
+    //int intercept(const int frameId, const char* subscopeKey, const int indeterminate);
 
     void serialize(const int frameId, const char* subscopeKey, const char* val)
     {
@@ -298,7 +298,7 @@ class ProgramPlayer : public Program<ScopeContainerPlayer>
     std::vector<unsigned char> loadedBuffer;
 
 public:
-    void load(const char* path)
+    ProgramPlayer(const char* path)
     {
         std::ifstream file(path, std::ios_base::binary);
         auto tempBuffer = std::vector<unsigned char>(std::istreambuf_iterator(file), {});
