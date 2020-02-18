@@ -34,6 +34,8 @@ class ScopeHandlerRecorder
         {
             int frameId;
             T val;
+
+            FrameIdValuePair(const int frameId, T val): frameId(frameId), val(val) {}
         };
 
         std::vector<FrameIdValuePair<double>> theDubbles;
@@ -59,7 +61,7 @@ public:
 
 
     void serialize(const int frameId, const char* subscopeKey, const char* val)
-    { subScopes[subscopeKey].serialStrings.emplace_back(frameId, val); }
+    { subScopes[subscopeKey].serialStrings.emplace_back(frameId, std::string(val)); }
 
 
     flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry> buildOrdinalScopeFlatbuffer(flatbuffers::FlatBufferBuilder& builder)
@@ -202,7 +204,7 @@ public:
         if(ordinalPosition == myRootBuffer->end()) throw std::runtime_error("Ordinal scope buffer overread");
 
         //TODO: assert the complete read before clobbering?
-        scopeMap[ptr] = ScopeHandlerPlayer(*ordinalPosition);
+        scopeMap.insert_or_assign(ptr, ScopeHandlerPlayer(*ordinalPosition));
         ++ordinalPosition;
     }
 
