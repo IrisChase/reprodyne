@@ -25,6 +25,23 @@ enum class Mode
     Play,
 };
 
+class PlaybackError : public std::runtime_error
+{
+    const int code;
+    const std::string dynamicErr; //Yeah yeah I know shut up
+
+public:
+    PlaybackError(const int code, const std::string dynamicErr):
+        code(code),
+        dynamicErr(dynamicErr),
+        std::runtime_error(dynamicErr.c_str())
+    {}
+
+    int getCode() const
+    { return code; }
+};
+
+
 class ScopeHandlerRecorder
 {
     struct SubScopeEntry
@@ -117,10 +134,10 @@ private:
     }
 
     void checkReadPastEnd(const int size, const int pos)
-    { if(size == pos) throw std::runtime_error("Read past end"); }
+    { if(size == pos) throw PlaybackError(REPRODYNE_STAT_TAPE_PAST_END, "Read past end"); }
 
     void checkFrame(const int frameId1, const int frameId2)
-    { if(frameId1 != frameId2) throw std::runtime_error("Frame mismatch!"); }
+    { if(frameId1 != frameId2) throw PlaybackError(REPRODYNE_STAT_FRAME_MISMATCH, "Frame mismatch!"); }
 
 public:
     ScopeHandlerPlayer(BufferType* buf): myBuffer(buf) {}
