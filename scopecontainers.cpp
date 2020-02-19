@@ -11,7 +11,7 @@ ScopeHandlerRecorder& ScopeContainerRecorder::at(void* ptr)
     if(ordinalIterator == ordinalMap.end())
     {
         //todo: throw scope out of range
-        throw PlaybackError(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Scope pointer unrecognized");
+        throw PlaybackError(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Unregistered scope!");
     }
 
     return storedScope.at(ordinalIterator->second);
@@ -46,7 +46,7 @@ void ScopeContainerPlayer::openScope(void* ptr)
 ScopeHandlerPlayer& ScopeContainerPlayer::at(void* ptr)
 {
     auto it = scopeMap.find(ptr);
-    if(it == scopeMap.end()) throw PlaybackError(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Did not load buffers!");
+    if(it == scopeMap.end()) throw PlaybackError(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Unregistered scope!");
     return it->second;
 }
 
