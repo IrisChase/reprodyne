@@ -386,7 +386,7 @@ TEST_CASE("Unregistered scope")
         {
             try
             {
-                reprodyne_serialize(&up, "bep", "fjfj");
+                reprodyne_intercept_indeterminate(&up, "bep", 3);
                 FAIL("Unregistered scope accepted in indeterminate read");
             }
             catch(const OopsieWhoopsie oops)
