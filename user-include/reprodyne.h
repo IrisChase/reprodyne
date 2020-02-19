@@ -40,8 +40,8 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 #define reprodyne_validate_string(scope, key, call) \
     reprodyne_do_not_call_this_function_directly_validate_string(scope, key, call)
 
-#define reprodyne_validate_video_frame_hash(scope, key, width, height, stride, bytes) \
-    reprodyne_do_not_call_this_function_directly_validate_video_frame_hash(scope, key, width, height, stride, byes)
+#define reprodyne_validate_bitmap_hash(scope, key, width, height, stride, bytes) \
+    reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(scope, key, width, height, stride, byes)
 
 
 /*-------------------------------Implementation junk beyond this point-------------------------------*/
@@ -65,7 +65,7 @@ double reprodyne_do_not_call_this_function_directly_intercept_indeterminate_doub
 
 void reprodyne_do_not_call_this_function_directly_validate_string(void* scope, const char* key, const char* cereal);
 
-void reprodyne_do_not_call_this_function_directly_validate_video_frame_hash(void* scope,
+void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* scope,
                                                                             const char* key,
                                                                             const int width,
                                                                             const int height,
@@ -97,7 +97,7 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read();
 #define reprodyne_intercept_indeterminate_double(scope, key, val) val
 
 #define reprodyne_validate_string(scope, key, call) ((void)0)
-#define reprodyne_validate_video_frame_hash(scope, key, width, height, stride, bytes) ((void)0)
+#define reprodyne_validate_bitmap_hash(scope, key, width, height, stride, bytes) ((void)0)
 
 
 #endif //REPRODYNE_AVAILABLE

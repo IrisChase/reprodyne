@@ -182,13 +182,14 @@ void reprodyne_do_not_call_this_function_directly_validate_string(void* scopePtr
     });
 }
 
-void reprodyne_do_not_call_this_function_directly_validate_video_frame_hash(void* scope,
-                                                                        const char* key,
-                                                                         const int width,
-                                                                        const int height,
-                                                                        const int stride,
-                                                                        void* bytes)
+void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* scope,
+                                                                       const char* key,
+                                                                       const int width,
+                                                                       const int height,
+                                                                       const int stride,
+                                                                       void* bytes)
 {
+
 }
 
 } //extern "C"

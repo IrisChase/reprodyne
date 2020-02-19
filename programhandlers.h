@@ -34,9 +34,9 @@ public:
     T intercept(void* scopePtr, const char* subscopeKey, const T indeterminate)
     { return scopes.at(scopePtr).intercept(readFrameId(), subscopeKey, indeterminate); }
 
-    template<typename T>
-    void serialize(void* scopePtr, const char* subscopeKey, const T serialValue)
-    { scopes.at(scopePtr).serialize(readFrameId(), subscopeKey, serialValue); }
+    template<typename... Ts>
+    void serialize(void* scopePtr, const char* subscopeKey, const Ts... serialValue)
+    { scopes.at(scopePtr).serialize(readFrameId(), subscopeKey, serialValue...); }
 
     void assertCompleteRead()
     { scopes.assertCompleteRead(); }

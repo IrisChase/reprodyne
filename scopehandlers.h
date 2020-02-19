@@ -48,6 +48,11 @@ public:
     void serialize(const int frameId, const char* subscopeKey, const char* val)
     { subScopes[subscopeKey].serialStrings.emplace_back(frameId, std::string(val)); }
 
+    void serialize(const int frameId, const char* subscopeKey, const int width, const int height, const char* hash)
+    {
+
+    }
+
 
     flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry> buildOrdinalScopeFlatbuffer(flatbuffers::FlatBufferBuilder& builder);
 };
