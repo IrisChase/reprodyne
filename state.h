@@ -175,21 +175,30 @@ public:
 
     void assertCompletReed() //I'm, bored okay?
     {
-        for(auto pair : readPosMap)
+        for(const KeyedScopeTapeEntry* entry : *myBuffer->keyedScopeTape())
         {
-            auto generateErrorMsg = [&](const std::string type)
+            const std::string subscopeKey = entry->key()->str();
+            auto readPosIterator = readPosMap.find(entry);
+
+            auto assertEntry = [&](const int progSize, const int callTapeSize)
             {
-                std::string ret;
-                ret = type;
-                ret = " tape not read to complete for scope key: ";
-                ret = pair.first->key()->str();
-                return ret;
+                auto generateErrorMsg = [&](const std::string type)
+                {
+                    std::string ret;
+                    ret = type;
+                    ret = " tape not read to complete for sub scope key: ";
+                    ret = subscopeKey;
+                    return ret;
+                };
+
+                if(entry->programTape()->size() != progSize)
+                    throw PlaybackError(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, generateErrorMsg("Program"));
+                if(entry->validationTape()->size() != callTapeSize)
+                    throw PlaybackError(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, generateErrorMsg("Call"));
             };
 
-            if(pair.first->programTape()->size() != pair.second.indeterminateDoublePos)
-                throw PlaybackError(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, generateErrorMsg("Program"));
-            if(pair.first->validationTape()->size() != pair.second.serialStringPos)
-                throw PlaybackError(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, generateErrorMsg("Call"));
+            if(readPosIterator == readPosMap.end()) assertEntry(0, 0); //0 0 because we haven't read anything, obvs
+            else assertEntry(readPosIterator->second.indeterminateDoublePos, readPosIterator->second.serialStringPos);
         }
     }
 };
