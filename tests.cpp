@@ -44,7 +44,7 @@ TEST_CASE("woof")
     {
         for(int i = 0; i != list.size(); ++i)
         {
-            const double rep = reprodyne_intercept_indeterminate(scope, key.c_str(), list[i]);
+            const double rep = reprodyne_intercept_indeterminate_double(scope, key.c_str(), list[i]);
 
             if(validationSet.size()) REQUIRE(validationSet[i] == rep);
         }
@@ -53,7 +53,7 @@ TEST_CASE("woof")
     auto callHelper = [&](void* scope, std::string key, auto list)
     {
         for(const double i : list)
-            reprodyne_serialize(scope, key.c_str(), std::string("pretendFunctionCall(" + std::to_string(i) + ");").c_str());
+            reprodyne_validate_string(scope, key.c_str(), std::string("pretendFunctionCall(" + std::to_string(i) + ");").c_str());
     };
 
 
@@ -150,7 +150,7 @@ TEST_CASE("woof")
 
         try
         {
-            reprodyne_serialize(&scope2, "the-wan", "wrongo");
+            reprodyne_validate_string(&scope2, "the-wan", "wrongo");
             FAIL("Mismatched Call not detected.");
         }
         catch(const OopsieWhoopsie oops)
@@ -207,10 +207,10 @@ TEST_CASE("Scope override")
     int scope;
 
     reprodyne_open_scope(&scope);
-    reprodyne_intercept_indeterminate(&scope, "n", 42);
+    reprodyne_intercept_indeterminate_double(&scope, "n", 42);
 
     reprodyne_open_scope(&scope);
-    reprodyne_intercept_indeterminate(&scope, "n", 240); //Dyslexics be blazin' like
+    reprodyne_intercept_indeterminate_double(&scope, "n", 240); //Dyslexics be blazin' like
 
     reprodyne_save(testDataPath);
     reprodyne_play(testDataPath);
@@ -220,10 +220,10 @@ TEST_CASE("Scope override")
     auto validate = [](void* scope1, void* scope2)
     {
         reprodyne_open_scope(scope1);
-        REQUIRE(reprodyne_intercept_indeterminate(scope1, "n", 4839) == 42);
+        REQUIRE(reprodyne_intercept_indeterminate_double(scope1, "n", 4839) == 42);
 
         reprodyne_open_scope(scope2);
-        REQUIRE(reprodyne_intercept_indeterminate(scope2, "n", 43894389) == 240);
+        REQUIRE(reprodyne_intercept_indeterminate_double(scope2, "n", 43894389) == 240);
 
         SECTION("Assert complete read for overriden scope")
         {
@@ -250,7 +250,7 @@ TEST_CASE("Scope override")
         reprodyne_open_scope(&scope1);
         reprodyne_open_scope(&scope1); //CLOBBER
 
-        REQUIRE(reprodyne_intercept_indeterminate(&scope1, "n", 43894389) == 240);
+        REQUIRE(reprodyne_intercept_indeterminate_double(&scope1, "n", 43894389) == 240);
 
         try
         {
@@ -283,7 +283,7 @@ TEST_CASE("Invalid scope key")
 
     try
     {
-        reprodyne_intercept_indeterminate(&scope, "notta", 42);
+        reprodyne_intercept_indeterminate_double(&scope, "notta", 42);
         FAIL("Intercept with bad key in playback mode didn't fail");
     }
     catch(const OopsieWhoopsie oops)
@@ -299,20 +299,20 @@ TEST_CASE("Validation and program tape different sizes, larger program tape")
 
     double up;
     reprodyne_open_scope(&up);
-    reprodyne_intercept_indeterminate(&up, "key", 42);
-    reprodyne_intercept_indeterminate(&up, "key", 42);
+    reprodyne_intercept_indeterminate_double(&up, "key", 42);
+    reprodyne_intercept_indeterminate_double(&up, "key", 42);
 
-    reprodyne_serialize(&up, "ee", "ffff");
+    reprodyne_validate_string(&up, "ee", "ffff");
 
     reprodyne_save(testDataPath);
     reprodyne_play(testDataPath);
     reprodyne_mark_frame();
     reprodyne_open_scope(&up);
 
-    reprodyne_intercept_indeterminate(&up, "key", 42);
-    reprodyne_intercept_indeterminate(&up, "key", 42);
+    reprodyne_intercept_indeterminate_double(&up, "key", 42);
+    reprodyne_intercept_indeterminate_double(&up, "key", 42);
 
-    reprodyne_serialize(&up, "ee", "ffff");
+    reprodyne_validate_string(&up, "ee", "ffff");
 
     reprodyne_assert_complete_read();
 
@@ -326,20 +326,20 @@ TEST_CASE("Validation and program tape different sizes, larger validation tape")
 
     double up;
     reprodyne_open_scope(&up);
-    reprodyne_intercept_indeterminate(&up, "key", 42);
+    reprodyne_intercept_indeterminate_double(&up, "key", 42);
 
-    reprodyne_serialize(&up, "ee", "ffff");
-    reprodyne_serialize(&up, "ee", "ffff");
+    reprodyne_validate_string(&up, "ee", "ffff");
+    reprodyne_validate_string(&up, "ee", "ffff");
 
     reprodyne_save(testDataPath);
     reprodyne_play(testDataPath);
     reprodyne_mark_frame();
     reprodyne_open_scope(&up);
 
-    reprodyne_intercept_indeterminate(&up, "key", 42);
+    reprodyne_intercept_indeterminate_double(&up, "key", 42);
 
-    reprodyne_serialize(&up, "ee", "ffff");
-    reprodyne_serialize(&up, "ee", "ffff");
+    reprodyne_validate_string(&up, "ee", "ffff");
+    reprodyne_validate_string(&up, "ee", "ffff");
 
     reprodyne_assert_complete_read();
 
@@ -357,7 +357,7 @@ TEST_CASE("Graceful handling of saved file with no entries")
     {
         double up;
         reprodyne_mark_frame();
-        reprodyne_intercept_indeterminate(&up, "fdsfd", 34243);
+        reprodyne_intercept_indeterminate_double(&up, "fdsfd", 34243);
     }
     catch(const OopsieWhoopsie oops)
     {
@@ -381,7 +381,7 @@ TEST_CASE("Unregistered scope")
     {
         try
         {
-            reprodyne_intercept_indeterminate(&up, "fj", 43);
+            reprodyne_intercept_indeterminate_double(&up, "fj", 43);
             FAIL("Unregistered scope accepted in indeterminate write");
         }
         catch(const OopsieWhoopsie oops)
@@ -393,7 +393,7 @@ TEST_CASE("Unregistered scope")
     {
         try
         {
-            reprodyne_serialize(&up, "fjfjfjasdfdas", "CEREAL");
+            reprodyne_validate_string(&up, "fjfjfjasdfdas", "CEREAL");
             FAIL("Unregistered scope accepted in serialize write");
         }
         catch(const OopsieWhoopsie oops)
@@ -411,7 +411,7 @@ TEST_CASE("Unregistered scope")
         {
             try
             {
-                reprodyne_intercept_indeterminate(&up, "bep", 3);
+                reprodyne_intercept_indeterminate_double(&up, "bep", 3);
                 FAIL("Unregistered scope accepted in indeterminate read");
             }
             catch(const OopsieWhoopsie oops)
@@ -423,7 +423,7 @@ TEST_CASE("Unregistered scope")
         {
             try
             {
-                reprodyne_serialize(&up, "bep", "");
+                reprodyne_validate_string(&up, "bep", "");
                 FAIL("Unregistered scope accepted for serialize read");
             }
             catch(const OopsieWhoopsie oops)

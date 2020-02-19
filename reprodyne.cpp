@@ -10,7 +10,7 @@
 std::unique_ptr<reprodyne::ProgramRecorder> recorder;
 std::unique_ptr<reprodyne::ProgramPlayer> player;
 
-Reprodyne_playback_failure_handler playbackErrorHandler = nullptr;
+reprodyne_playback_failure_handler playbackErrorHandler = nullptr;
 std::string jumpSafeString;
 
 //Playing it on the loose and easy with these exceptions because they are playback,
@@ -85,7 +85,7 @@ static void reset()
 extern "C"
 {
 
-void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(Reprodyne_playback_failure_handler handler)
+void reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(reprodyne_playback_failure_handler handler)
 { playbackErrorHandler = handler; /*Not my problem anymore...*/ }
 
 void reprodyne_do_not_call_this_function_directly_record()
@@ -160,7 +160,7 @@ double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* sco
     });
 }
 
-double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void* scopePtr, const char* scopeKey, const double indeterminate)
+double reprodyne_do_not_call_this_function_directly_intercept_indeterminate_double(void* scopePtr, const char* scopeKey, const double indeterminate)
 {
     return safeBlock<double>([&]()
     {
@@ -171,7 +171,7 @@ double reprodyne_do_not_call_this_function_directly_intercept_indeterminate(void
     });
 }
 
-void reprodyne_do_not_call_this_function_directly_serialize(void* scopePtr, const char* subScopeKey, const char* call)
+void reprodyne_do_not_call_this_function_directly_validate_string(void* scopePtr, const char* subScopeKey, const char* call)
 {
     return safeBlock<void>([&]
     {
@@ -182,7 +182,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scopePtr, cons
     });
 }
 
-void reprodyne_do_not_call_this_function_directly_serialize_video_frame(void* scope,
+void reprodyne_do_not_call_this_function_directly_validate_video_frame_hash(void* scope,
                                                                         const char* key,
                                                                          const int width,
                                                                         const int height,
