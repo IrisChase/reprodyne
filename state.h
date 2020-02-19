@@ -129,7 +129,7 @@ private:
     const KeyedScopeTapeEntry* getKeyedEntry(const char* subscopeKey)
     {
         auto entry = myBuffer->keyedScopeTape()->LookupByKey(subscopeKey);
-        if(!entry) throw std::runtime_error("sub scope not found");
+        if(!entry) throw PlaybackError(REPRODYNE_STAT_EMPTY_TAPE, "Sub scope not found");
         return entry;
     }
 
@@ -169,7 +169,8 @@ public:
 
         checkFrame(serialEntry->frameId(), frameId);
 
-        if(std::string(val) != serialEntry->call()->str()) throw std::runtime_error("Serial call mismatch");
+        if(std::string(val) != serialEntry->call()->str())
+            throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, "Serial call mismatch");
     }
 };
 
@@ -191,7 +192,7 @@ public:
         if(ordinalIterator == ordinalMap.end())
         {
             //todo: throw scope out of range
-            throw std::runtime_error("FIXME");
+            throw PlaybackError(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Scope pointer unrecognized");
         }
 
         return storedScope.at(ordinalIterator->second);
@@ -228,7 +229,7 @@ public:
     ScopeHandlerPlayer& at(void* ptr)
     {
         auto it = scopeMap.find(ptr);
-        if(it == scopeMap.end()) throw std::runtime_error("Did not load buffers!");
+        if(it == scopeMap.end()) throw PlaybackError(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Did not load buffers!");
         return it->second;
     }
 
@@ -260,7 +261,7 @@ public:
     int readFrameId()
     {
         if(!frameCounter)
-            throw std::runtime_error("TODO: Make this exception proper.");
+            throw std::logic_error("Call to intercept before reprodyne_mark_frame is forbidden.");
         return *frameCounter;
     }
 

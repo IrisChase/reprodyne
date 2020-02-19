@@ -24,6 +24,11 @@ std::unique_ptr<reprodyne::ProgramPlayer> player;
 Reprodyne_playback_failure_handler playbackErrorHandler = nullptr;
 std::string jumpSafeString;
 
+//Playing it on the loose and easy with these exceptions because they are playback,
+// not memory errors. And it's prettier this way~
+
+//We need to catch all exceptions and deal with them here because you don't want
+// the library to leak through a C. And as such, we want to be longjmp safe.
 static void handlePlaybackErrorException(const reprodyne::PlaybackError& e)
 {
     if(!playbackErrorHandler)
@@ -34,11 +39,13 @@ static void handlePlaybackErrorException(const reprodyne::PlaybackError& e)
 
     jumpSafeString = e.what(); //what() references an std::string, so it's not safe beyond this point.
     playbackErrorHandler(e.getCode(), jumpSafeString.c_str());
+    std::terminate(); //If you don't do it, I will.
 }
 
 static void handleRuntimeErrrr(const char* what)
 {
     std::cerr << "Reprodyne runtime error: " << what << std::endl;
+    //std::terminate(); //TODO: uncomment this
 }
 
 static void unknownErrorDie()
@@ -46,6 +53,7 @@ static void unknownErrorDie()
     std::terminate();
 }
 
+//Uniform exception handler so that we can translate to C-safe errors consistently.
 template<typename T>
 static T safeBlock(std::function<T()> thingamajigulator)
 {
@@ -54,7 +62,7 @@ static T safeBlock(std::function<T()> thingamajigulator)
     catch(const reprodyne::PlaybackError& e)
     { handlePlaybackErrorException(e); }
     catch(const std::runtime_error& e)
-    { handleRuntimeErrrr(e.what()); }
+    { handleRuntimeErrrr(e.what()); } //"eh, what??"
     catch(...)
     {
         //fucc
@@ -83,13 +91,6 @@ static void reset()
 {
     recorder.reset();
     player.reset();
-}
-
-template<typename T>
-T select()
-{
-    if(recorder) return recorder;
-    if(player) return player;
 }
 
 extern "C"
@@ -130,7 +131,7 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
     //OOOOPS
     safeBlock<void>([&]
     {
-
+        throw std::runtime_error("Read assertion not even remotely added yet IRIS.");
     });
 }
 
@@ -194,7 +195,7 @@ void reprodyne_do_not_call_this_function_directly_serialize(void* scopePtr, cons
 
 void reprodyne_do_not_call_this_function_directly_serialize_video_frame(void* scope,
                                                                         const char* key,
-                                                                        const int width,
+                                                                         const int width,
                                                                         const int height,
                                                                         const int stride,
                                                                         void* bytes)
