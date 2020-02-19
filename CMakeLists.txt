@@ -32,15 +32,7 @@ find_package(ZLIB REQUIRED)
 find_package(Flatbuffers REQUIRED)
 find_package(Catch2)
 
-find_library(AVCODEC_LIB avcodec)
-
-if(NOT AVCODEC_LIB)
-    message(FATAL_ERROR "Could not locate ffmpeg's avcodec library!")
-endif()
-
 target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
-target_link_libraries(reprodyne ${AVCODEC_LIB})
-
 
 if(DEFINED Catch2_FOUND)
     add_executable(reprodyne_tests user-include/reprodyne.h tests.cpp catchmain.cpp)
@@ -54,8 +46,7 @@ add_custom_command(DEPENDS schema.fbs
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 #You'll definitely want to build this target if you wanna work with the code.
-#This gets rebuilt every time you compile but the flatbuffers compiler is fast,
-# and there's only one translation unit anyway.
+#This gets rebuilt every time you compile but the flatbuffers compiler is p.fast.
 add_custom_target(generated_code DEPENDS schema_generated.h)
 add_dependencies(reprodyne generated_code)
 
