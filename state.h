@@ -129,15 +129,27 @@ private:
     const KeyedScopeTapeEntry* getKeyedEntry(const char* subscopeKey)
     {
         auto entry = myBuffer->keyedScopeTape()->LookupByKey(subscopeKey);
-        if(!entry) throw PlaybackError(REPRODYNE_STAT_EMPTY_TAPE, "Sub scope not found");
+        if(!entry)
+        {
+            std::string msg = "Tape empty for key: \"";
+            msg += subscopeKey;
+            msg += "\"\n";
+            throw PlaybackError(REPRODYNE_STAT_EMPTY_TAPE, msg);
+        }
         return entry;
     }
 
     void checkReadPastEnd(const int size, const int pos)
     { if(size == pos) throw PlaybackError(REPRODYNE_STAT_TAPE_PAST_END, "Read past end"); }
 
-    void checkFrame(const int frameId1, const int frameId2)
-    { if(frameId1 != frameId2) throw PlaybackError(REPRODYNE_STAT_FRAME_MISMATCH, "Frame mismatch!"); }
+    void checkFrame(const int frameId1, const int frameId2, const char* moreSpecifically)
+    {
+        std::string msg = "Frame ID mismatch!";
+        msg += moreSpecifically;
+        msg.push_back('\n');
+
+        if(frameId1 != frameId2) throw PlaybackError(REPRODYNE_STAT_FRAME_MISMATCH, msg);
+    }
 
 public:
     ScopeHandlerPlayer(BufferType* buf): myBuffer(buf) {}
@@ -151,7 +163,7 @@ public:
 
         auto indeterminateEntry = entry->programTape()->Get(ordinal);
 
-        checkFrame(indeterminateEntry->frameId(), frameId);
+        checkFrame(indeterminateEntry->frameId(), frameId, "Indeterminates out of order!");
 
         return indeterminateEntry->val();
     }
@@ -167,10 +179,18 @@ public:
 
         auto serialEntry = entry->validationTape()->Get(ordinal);
 
-        checkFrame(serialEntry->frameId(), frameId);
+        checkFrame(serialEntry->frameId(), frameId, "Serialized calls out of order!");
 
         if(std::string(val) != serialEntry->call()->str())
-            throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, "Serial call mismatch");
+        {
+            std::string msg = "Stored call mismatch! Program produced: ";
+            msg += val;
+            msg.push_back('\n');
+            msg += "Was expecting: \n";
+            msg += serialEntry->call()->str();
+            msg.push_back('\n');
+            throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, msg);
+        }
     }
 
     void assertCompletReed() //I'm, bored okay?
