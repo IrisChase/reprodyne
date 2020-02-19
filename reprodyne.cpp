@@ -1,21 +1,10 @@
-#include <string>
-
-#include <map>
-#include <vector>
-#include <fstream>
 #include <iostream>
-#include <assert.h>
-
-#include <zlib.h>
-
-#include <libavcodec/avcodec.h>
 
 #include "lexcompare.h"
 
-#include "schema_generated.h"
-
 #include "user-include/reprodyne.h"
-#include "state.h"
+
+#include "programhandlers.h"
 
 
 std::unique_ptr<reprodyne::ProgramRecorder> recorder;

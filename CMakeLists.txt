@@ -9,8 +9,18 @@ add_library(reprodyne
 user-include/reprodyne.h
 reprodyne.cpp
 fileformat.h
-state.h
-state.cpp
+
+errorstuff.h
+
+scopehandlers.h
+scopehandlers.cpp
+
+scopecontainers.h
+scopecontainers.cpp
+
+programhandlers.h
+programhandlers.cpp
+
 
 schema_generated.h
 )
