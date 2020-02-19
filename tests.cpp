@@ -224,6 +224,11 @@ TEST_CASE("Scope override")
 
         reprodyne_open_scope(scope2);
         REQUIRE(reprodyne_intercept_indeterminate(scope2, "n", 43894389) == 240);
+
+        SECTION("Assert complete read for overriden scope")
+        {
+            reprodyne_assert_complete_read();
+        }
     };
 
     SECTION("Playback override with one pointer")
@@ -236,6 +241,26 @@ TEST_CASE("Scope override")
         int scope1;
         int scope2;
         validate(&scope1, &scope2);
+    }
+
+    SECTION("Assert complete read after clobbering incompletely read scope")
+    {
+        int scope1;
+
+        reprodyne_open_scope(&scope1);
+        reprodyne_open_scope(&scope1); //CLOBBER
+
+        REQUIRE(reprodyne_intercept_indeterminate(&scope1, "n", 43894389) == 240);
+
+        try
+        {
+            reprodyne_assert_complete_read();
+            FAIL("Reprodyne should have aborted on incomplete indeterminate read.");
+        }
+        catch(const OopsieWhoopsie oops)
+        {
+            REQUIRE(oops.code == REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ);
+        }
     }
 }
 
