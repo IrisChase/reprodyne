@@ -7,8 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(reprodyne
 user-include/reprodyne.h
-reprodyne.cpp
-fileformat.h
 
 errorstuff.h
 
@@ -18,9 +16,11 @@ scopehandlers.cpp
 scopecontainers.h
 scopecontainers.cpp
 
+fileformat.h
 programhandlers.h
 programhandlers.cpp
 
+reprodyne.cpp
 
 schema_generated.h
 )
