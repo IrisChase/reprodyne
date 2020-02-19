@@ -124,7 +124,7 @@ private:
         int serialStringPos = 0;
     };
 
-    std::map<const void*, LastReadPos> readPosMap;
+    std::map<const KeyedScopeTapeEntry*, LastReadPos> readPosMap;
 
     const KeyedScopeTapeEntry* getKeyedEntry(const char* subscopeKey)
     {
@@ -172,6 +172,26 @@ public:
         if(std::string(val) != serialEntry->call()->str())
             throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, "Serial call mismatch");
     }
+
+    void assertCompletReed() //I'm, bored okay?
+    {
+        for(auto pair : readPosMap)
+        {
+            auto generateErrorMsg = [&](const std::string type)
+            {
+                std::string ret;
+                ret = type;
+                ret = " tape not read to complete for scope key: ";
+                ret = pair.first->key()->str();
+                return ret;
+            };
+
+            if(pair.first->programTape()->size() != pair.second.indeterminateDoublePos)
+                throw PlaybackError(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, generateErrorMsg("Program"));
+            if(pair.first->validationTape()->size() != pair.second.serialStringPos)
+                throw PlaybackError(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, generateErrorMsg("Call"));
+        }
+    }
 };
 
 class ScopeContainerRecorder
@@ -216,12 +236,28 @@ private:
 
     std::map<void*, ScopeHandlerPlayer> scopeMap;
 
+    std::vector<PlaybackError> deferredCompleteReadErrors;
+
 public:
     void openScope(void *ptr)
     {
         if(ordinalPosition == myRootBuffer->end()) throw std::runtime_error("Ordinal scope buffer overread");
 
-        //TODO: assert the complete read before clobbering?
+        auto it = scopeMap.find(ptr);
+
+        if(it != scopeMap.end())
+        {
+            try
+            {
+                it->second.assertCompletReed();
+            }
+            catch(const PlaybackError& e)
+            {
+                //Interface doesn't expect such eager playback errors, so we stash it for now~
+                deferredCompleteReadErrors.push_back(e);
+            }
+        }
+
         scopeMap.insert_or_assign(ptr, ScopeHandlerPlayer(*ordinalPosition));
         ++ordinalPosition;
     }
@@ -237,6 +273,13 @@ public:
     {
         myRootBuffer = rootBeer;
         ordinalPosition = myRootBuffer->begin();
+    }
+
+    void assertCompleteRead()
+    {
+        for(auto& e : deferredCompleteReadErrors) throw e; //Only the first one but that's cool too.
+
+        for(auto pair : scopeMap) pair.second.assertCompletReed();
     }
 };
 
@@ -272,6 +315,9 @@ public:
     template<typename T>
     void serialize(void* scopePtr, const char* subscopeKey, const T serialValue)
     { scopes.at(scopePtr).serialize(readFrameId(), subscopeKey, serialValue); }
+
+    void assertCompleteRead()
+    { scopes.assertCompleteRead(); }
 };
 
 class ProgramRecorder : public Program<ScopeContainerRecorder>

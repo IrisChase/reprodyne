@@ -128,10 +128,10 @@ void reprodyne_do_not_call_this_function_directly_play(const char* path)
 
 void reprodyne_do_not_call_this_function_directly_assert_complete_read()
 {
-    //OOOOPS
     safeBlock<void>([&]
     {
-        throw std::runtime_error("Read assertion not even remotely added yet IRIS.");
+        if(!player) throw std::logic_error("Cannot assert complete read in record mode");
+        player->assertCompleteRead();
     });
 }
 
