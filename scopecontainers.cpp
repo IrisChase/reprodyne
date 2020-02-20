@@ -9,10 +9,7 @@ ScopeHandlerRecorder& ScopeContainerRecorder::at(void* ptr)
 {
     auto ordinalIterator = ordinalMap.find(ptr);
     if(ordinalIterator == ordinalMap.end())
-    {
-        //todo: throw scope out of range
         throw PlaybackError(REPRODYNE_STAT_UNREGISTERED_SCOPE, "Unregistered scope!");
-    }
 
     return storedScope.at(ordinalIterator->second);
 }

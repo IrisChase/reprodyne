@@ -78,7 +78,7 @@ void validateHelper(Bitmap& bitbap, const char* key = basicKey)
     }
 
 
-    //Randomize stride area? TODO
+    //Randomize stride area?
     // (ehh, that should be in a fuzz test...)
 
     reprodyne_validate_bitmap_hash(nullptr,

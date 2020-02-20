@@ -37,7 +37,7 @@ static void handlePlaybackErrorException(const reprodyne::PlaybackError& e)
 static void handleRuntimeErrrr(const char* what)
 {
     std::cerr << "Reprodyne runtime error: " << what << std::endl;
-    //std::terminate(); //TODO: uncomment this
+    std::terminate();
 }
 
 static void unknownErrorDie()
