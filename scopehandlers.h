@@ -23,13 +23,6 @@ class ScopeHandlerRecorder
 
     std::map<std::string, SubScopeEntry> subScopes;
 
-    template<typename ContainerType, typename ValueType>
-    ValueType saveValue(ContainerType& cont, const int frameId, const ValueType val)
-    {
-        cont.emplace_back(frameId, val);
-        return cont.back().val;
-    }
-
 public:
     ScopeHandlerRecorder(flatbuffers::FlatBufferBuilder& builder): builder(builder) {} //builder builder builder
 
