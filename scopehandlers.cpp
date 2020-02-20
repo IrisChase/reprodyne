@@ -85,7 +85,7 @@ void ScopeHandlerPlayer::serialize(const int frameId, const char* subscopeKey, c
         msg += "Was expecting: \n";
         msg += serialEntry->str()->str();
         msg.push_back('\n');
-        throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, msg);
+        throw PlaybackError(REPRODYNE_STAT_VALIDATION_FAIL, msg);
     }
 }
 
@@ -105,7 +105,7 @@ void ScopeHandlerPlayer::serialize(const int frameId,
     checkFrame(serialEntry->frameId(), frameId, "Validation video frame out of order!");
 
     if(!std::equal(hash.begin(), hash.end(), serialEntry->sha256()->begin(), serialEntry->sha256()->end()))
-        throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, "Stored video hash mismatch!");
+        throw PlaybackError(REPRODYNE_STAT_VALIDATION_FAIL, "Stored video hash mismatch!");
 }
 
 void ScopeHandlerPlayer::assertCompletReed() //I'm, bored okay?

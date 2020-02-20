@@ -184,7 +184,7 @@ TEST_CASE("Video frame failure conditions")
 
         SECTION("Input video frame mismatch")
         {
-            validationFail(REPRODYNE_STAT_CALL_MISMATCH,
+            validationFail(REPRODYNE_STAT_VALIDATION_FAIL,
                            "Accepted input was different from recorded",
                            []() { validateHelper(bitmap2); });
         }
@@ -208,13 +208,13 @@ TEST_CASE("Video frame failure conditions")
         {
             SECTION("Width")
             {
-                reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
+                reconfigureBitmap1validate(REPRODYNE_STAT_VALIDATION_FAIL,
                                            "Accepted frame with too small a width",
                                            [](Bitmap& bip) { --bip.width; });
             }
             SECTION("Height")
             {
-                reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
+                reconfigureBitmap1validate(REPRODYNE_STAT_VALIDATION_FAIL,
                                            "Accepted frame with too small a height",
                                            [](Bitmap& bip) { --bip.height; });
             }

@@ -2,7 +2,7 @@
 #define REPRODYNE_H
 
 #define REPRODYNE_STAT_FRAME_MISMATCH              100
-#define REPRODYNE_STAT_CALL_MISMATCH               101 //TODO: rename to validation
+#define REPRODYNE_STAT_VALIDATION_FAIL             101
 #define REPRODYNE_STAT_EMPTY_TAPE                  102
 #define REPRODYNE_STAT_TAPE_PAST_END               103
 #define REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ   104

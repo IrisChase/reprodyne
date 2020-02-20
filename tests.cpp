@@ -146,7 +146,7 @@ TEST_CASE("woof")
         catch(const OopsieWhoopsie oops)
         {
             //Check da oophs code
-            REQUIRE(oops.code == REPRODYNE_STAT_CALL_MISMATCH);
+            REQUIRE(oops.code == REPRODYNE_STAT_VALIDATION_FAIL);
         }
     }
     SECTION("Incomplete program read")
