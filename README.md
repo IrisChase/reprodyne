@@ -1,13 +1,13 @@
 # Reprodyne
-Reprodyne is an Apache 2 licensed C/++ library designed to capture the results of manual testing and integrate them into automated test suites.
+Reprodyne is an Apache 2 licensed C/C++ library designed to capture the results of manual testing and integrate them into automated test suites.
 
-Generally speaking, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. 
+Generally speaking, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. Reprodyne is designed to leverage this concept.
 
 Reprodyne is not meant to *replace* existing test frameworks, but rather to augment their capabilities. It should be possible, at least in theory, to integrate it with any test framework.
 
-From a high level, Reprodyne works by transforming non-deterministic funtions into deterministic ones, and saving their results for testing. "Interceptors" capture indeterminate values in record mode and resupply them in playback mode. "Validators" save values produced by the program in record mode, and compare against them in playback, signaling a playback failure if anything is different.
+From a high level, Reprodyne works by transforming non-deterministic funtions into deterministic ones, and saving their results for testing. "Interceptors" capture indeterminate values in record mode and resupply them in playback mode. "Validators" save values produced by the program in record mode, and compares against them in playback mode, signaling a playback failure if anything is different.
 
-The Reprodyne API is defined entirely as a set of preprocessor macros, so they gracefully expand into no-ops and so that there is no need to link against it it once you're done testing.
+The Reprodyne API is defined entirely as a set of preprocessor macros, so that once you're done testing, they gracefully expand into no-ops and there is no longer a need to link against the library.
 
 
 # Build/Install
