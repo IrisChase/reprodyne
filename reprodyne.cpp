@@ -1,6 +1,7 @@
 #include <iostream>
 
-#include "lexcompare.h"
+
+#include <openssl/sha.h>
 
 #include "user-include/reprodyne.h"
 
@@ -191,17 +192,41 @@ void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* sco
                                                                        const int stride,
                                                                        void* bytes)
 {
-    std::vector<int8_t> hash(256);
-
-    //COMPUTE HASH
-
-    //MOTHERFUCKER
     safeBlock<void>([&]
     {
+        //I like my typos sometimes
+        auto errorHahnDler = [&](const char* msg)
+        {
+            //This is only safe because jumpSafeString is only otherwise used by
+            // the playback error handler. Even still, I don't like this...
+            jumpSafeString = msg;
+            jumpSafeString += " in validate bitmap hash function!";
+            jumpSafeString += " Subscope key: ";
+            jumpSafeString += key;
+            throw std::runtime_error(jumpSafeString.c_str());
+        };
+
+        if(height < 1)      errorHahnDler("Useless height");
+        if(width < 1)       errorHahnDler("Useless width");
+        if(stride < width)  errorHahnDler("Stride smaller than width");
+        if(!bytes)          errorHahnDler("NULL data pointer");
+
+        //int8_t because that's how flatbuffers likes it, I ain't judge.
+        std::vector<int8_t> hash(SHA256_DIGEST_LENGTH);
+
+        //unsigned char because that's how OpenSSL likes it, I ain't judge.
+        std::vector<unsigned char> clippedImageRegion;
+        clippedImageRegion.reserve(width * height);
+
+        for(int i = 0; i != height; ++i)
+            for(int w = 0; w != width; ++w)
+                clippedImageRegion.push_back(reinterpret_cast<unsigned char*>(bytes)[height * stride + w]);
+
+        SHA256(&clippedImageRegion[0], clippedImageRegion.size(), reinterpret_cast<unsigned char*>(&hash[0]));
+
         if(recorder)    recorder->serialize(scope, key, width, height, hash); //Variadic templates are badass.
         else if(player)   player->serialize(scope, key, width, height, hash);
     });
-
 }
 
 } //extern "C"

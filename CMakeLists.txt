@@ -30,9 +30,11 @@ target_compile_definitions(reprodyne PUBLIC REPRODYNE_AVAILABLE)
 
 find_package(ZLIB REQUIRED)
 find_package(Flatbuffers REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(Catch2)
 
 target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
+target_link_libraries(reprodyne ${OPENSSL_CRYPTO_LIBRARY})
 
 if(DEFINED Catch2_FOUND)
     add_executable(reprodyne_tests user-include/reprodyne.h tests.cpp catchmain.cpp)
