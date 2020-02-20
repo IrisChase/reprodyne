@@ -14,21 +14,10 @@ flatbuffers::Offset<OrdinalScopeTapeEntry> ScopeHandlerRecorder::buildOrdinalSco
         const auto subScopeEntry = pair.second;
         const auto subscopeKey   = builder.CreateString(pair.first);
 
-
-        std::vector<flatbuffers::Offset<reprodyne::IndeterminateEntry>> indeterminateEntries;
-        for(auto entry : subScopeEntry.theDubbles)
-            indeterminateEntries.push_back(reprodyne::CreateIndeterminateEntry(builder, entry.frameId, entry.val));
-
-        std::vector<flatbuffers::Offset<reprodyne::CallEntry>> callEntries;
-        for(auto entry : subScopeEntry.serialStrings)
-            callEntries.push_back(reprodyne::CreateCallEntry(builder, entry.frameId, builder.CreateString(entry.val)));
-
-
-
         keyedEntries.push_back(reprodyne::CreateKeyedScopeTapeEntry(builder,
                                                                     subscopeKey,
-                                                                    builder.CreateVector(indeterminateEntries),
-                                                                    builder.CreateVector(callEntries)));
+                                                                    builder.CreateVector(subScopeEntry.theDubbles),
+                                                                    builder.CreateVector(subScopeEntry.serialStrings)));
     }
 
     return reprodyne::CreateOrdinalScopeTapeEntry(builder, builder.CreateVectorOfSortedTables(&keyedEntries));
@@ -67,9 +56,9 @@ double ScopeHandlerPlayer::intercept(const int frameId, const char* subscopeKey,
     auto entry = getKeyedEntry(subscopeKey);
     const auto ordinal = readPosMap[entry].indeterminateDoublePos++;
 
-    checkReadPastEnd(entry->programTape()->size(), ordinal);
+    checkReadPastEnd(entry->indeterminateDoubles()->size(), ordinal);
 
-    auto indeterminateEntry = entry->programTape()->Get(ordinal);
+    auto indeterminateEntry = entry->indeterminateDoubles()->Get(ordinal);
 
     checkFrame(indeterminateEntry->frameId(), frameId, "Indeterminates out of order!");
 
@@ -81,19 +70,19 @@ void ScopeHandlerPlayer::serialize(const int frameId, const char* subscopeKey, c
     auto entry = getKeyedEntry(subscopeKey);
     const auto ordinal = readPosMap[entry].serialStringPos++;
 
-    checkReadPastEnd(entry->validationTape()->size(), ordinal);
+    checkReadPastEnd(entry->validationStrings()->size(), ordinal);
 
-    auto serialEntry = entry->validationTape()->Get(ordinal);
+    auto serialEntry = entry->validationStrings()->Get(ordinal);
 
     checkFrame(serialEntry->frameId(), frameId, "Serialized calls out of order!");
 
-    if(std::string(val) != serialEntry->call()->str())
+    if(std::string(val) != serialEntry->str()->str())
     {
         std::string msg = "Stored call mismatch! Program produced: ";
         msg += val;
         msg.push_back('\n');
         msg += "Was expecting: \n";
-        msg += serialEntry->call()->str();
+        msg += serialEntry->str()->str();
         msg.push_back('\n');
         throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, msg);
     }
@@ -117,9 +106,9 @@ void ScopeHandlerPlayer::assertCompletReed() //I'm, bored okay?
                 return ret;
             };
 
-            if(entry->programTape()->size() != progSize)
+            if(entry->indeterminateDoubles()->size() != progSize)
                 throw PlaybackError(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, generateErrorMsg("Program"));
-            if(entry->validationTape()->size() != callTapeSize)
+            if(entry->validationStrings()->size() != callTapeSize)
                 throw PlaybackError(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, generateErrorMsg("Call"));
         };
 

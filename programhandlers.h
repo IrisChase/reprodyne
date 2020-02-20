@@ -14,6 +14,9 @@ protected:
     ScopeContainer scopes;
 
 public:
+    Program() {}
+    Program(ScopeContainer cont): scopes(cont) {}
+
     void openScope(void* ptr)
     { scopes.openScope(ptr); }
 
@@ -47,7 +50,11 @@ public:
 
 class ProgramRecorder : public Program<ScopeContainerRecorder>
 {
+    flatbuffers::FlatBufferBuilder builder;
+
 public:
+    ProgramRecorder(): Program(ScopeContainerRecorder(builder)) {}
+
     void save(const char* path);
 };
 

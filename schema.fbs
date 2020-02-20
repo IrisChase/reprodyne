@@ -4,24 +4,32 @@ file_extension "x3th";
 
 namespace reprodyne;
 
-table IndeterminateEntry
+table IndeterminateDoubleEntry
 {
     frameId:int;
     val:double;
 }
 
-table CallEntry
+table ValidationStringEntry
 {
     frameId:int;
-    call:string;
+    str:string;
+}
+
+table ValidationVideoSHA256Entry
+{
+    frameId:int;
+    width:int;
+    height:int;
+    sha256:[byte];
 }
 
 table KeyedScopeTapeEntry
 {
     key:string (key);
 
-    programTape:[IndeterminateEntry];
-    validationTape:[CallEntry];
+    indeterminateDoubles:[IndeterminateDoubleEntry];
+    validationStrings:[ValidationStringEntry];
 }
 
 table OrdinalScopeTapeEntry

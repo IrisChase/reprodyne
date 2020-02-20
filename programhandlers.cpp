@@ -8,9 +8,10 @@
 namespace reprodyne
 {
 
+
+
 void ProgramRecorder::save(const char* path)
 {
-    flatbuffers::FlatBufferBuilder builder = flatbuffers::FlatBufferBuilder();
     {
         auto ordinalScopes = scopes.pop();
 
@@ -39,6 +40,8 @@ void ProgramRecorder::save(const char* path)
 
     const int finalFileSize = reprodyne::FileFormat::reservedRangeSize + compressionRegionSize;
     std::ofstream(path, std::ios_base::binary).write(reinterpret_cast<char*>(&outputBuffer[0]), finalFileSize);
+
+    builder = flatbuffers::FlatBufferBuilder(); //reset just in case
 }
 
 ProgramPlayer::ProgramPlayer(const char* path)

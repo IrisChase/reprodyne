@@ -12,20 +12,12 @@ namespace reprodyne
 
 class ScopeHandlerRecorder
 {
+    flatbuffers::FlatBufferBuilder& builder;
+
     struct SubScopeEntry
     {
-        template<typename T>
-        struct FrameIdValuePair
-        {
-            int frameId;
-            T val;
-
-            FrameIdValuePair(const int frameId, T val): frameId(frameId), val(val) {}
-        };
-
-        std::vector<FrameIdValuePair<double>> theDubbles;
-        std::vector<FrameIdValuePair<int>> theInts;
-        std::vector<FrameIdValuePair<std::string>> serialStrings;
+        std::vector<flatbuffers::Offset<IndeterminateDoubleEntry>> theDubbles;
+        std::vector<flatbuffers::Offset<ValidationStringEntry>> serialStrings;
     };
 
     std::map<std::string, SubScopeEntry> subScopes;
@@ -38,20 +30,32 @@ class ScopeHandlerRecorder
     }
 
 public:
+    ScopeHandlerRecorder(flatbuffers::FlatBufferBuilder& builder): builder(builder) {} //builder builder builder
+
     double intercept(const int frameId, const char* subscopeKey, const double indeterminate)
-    { return saveValue(subScopes[subscopeKey].theDubbles, frameId, indeterminate); }
+    {
+        subScopes[subscopeKey].theDubbles.push_back(CreateIndeterminateDoubleEntry(builder,
+                                                                                   frameId,
+                                                                                   indeterminate));
+        return indeterminate;
+    }
 
-    int intercept(const int frameId, const char* subscopeKey, const int indeterminate)
-    { return saveValue(subScopes[subscopeKey].theInts, frameId, indeterminate); }
-
+    //int intercept(const int frameId, const char* subscopeKey, const int indeterminate)
+    //{ return saveValue(subScopes[subscopeKey].theInts, frameId, indeterminate); }
 
     void serialize(const int frameId, const char* subscopeKey, const char* val)
-    { subScopes[subscopeKey].serialStrings.emplace_back(frameId, std::string(val)); }
+    {
+        subScopes[subscopeKey].serialStrings.push_back(CreateValidationStringEntry(builder,
+                                                                                   frameId,
+                                                                                   builder.CreateString(val)));
+    }
 
+    /*
     void serialize(const int frameId, const char* subscopeKey, const int width, const int height, const char* hash)
     {
 
     }
+    */
 
 
     flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry> buildOrdinalScopeFlatbuffer(flatbuffers::FlatBufferBuilder& builder);

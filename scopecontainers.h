@@ -9,13 +9,17 @@ namespace reprodyne
 
 class ScopeContainerRecorder
 {
+    flatbuffers::FlatBufferBuilder& builder;
+
     std::vector<ScopeHandlerRecorder> storedScope;
     std::map<void*, int> ordinalMap;
 
 public:
+    ScopeContainerRecorder(flatbuffers::FlatBufferBuilder& builder): builder(builder) {}
+
     void openScope(void* ptr)
     {
-        storedScope.emplace_back();
+        storedScope.emplace_back(builder);
         ordinalMap[ptr] = storedScope.size() - 1;
     }
 
