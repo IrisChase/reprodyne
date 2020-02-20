@@ -200,17 +200,17 @@ TEST_CASE("Video frame failure conditions")
         }
         SECTION("Video input underflow/incomplete read")
         {
-            validationFail(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ,
+            validationFail(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ,
                            "Incomplete read succesfully asserted, oops",
                            []() { reprodyne_assert_complete_read(); });
         }
         SECTION("Input frame dimensions are different")
         {
-            reconfigureBitmap1validate(REPRODYNE_STAT_FRAME_MISMATCH,
+            reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
                                        "Accepted frame with too small a width",
                                        [](Bitmap& bip) { --bip.width; });
 
-            reconfigureBitmap1validate(REPRODYNE_STAT_FRAME_MISMATCH,
+            reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
                                        "Accepted frame with too small a height",
                                        [](Bitmap& bip) { --bip.height; });
 
@@ -228,7 +228,7 @@ TEST_CASE("Video frame failure conditions")
         readyRecord();
         readyPlay();
 
-        validationFail(REPRODYNE_STAT_TAPE_PAST_END,
+        validationFail(REPRODYNE_STAT_EMPTY_TAPE,
                        "Read worked empty tape succesfully",
                        []()
         {
