@@ -91,8 +91,8 @@ void ScopeHandlerPlayer::serialize(const int frameId, const char* subscopeKey, c
 
 void ScopeHandlerPlayer::serialize(const int frameId,
                                    const char* subscopeKey,
-                                   const int width,
-                                   const int height,
+                                   const unsigned int width,
+                                   const unsigned int height,
                                    std::vector<int8_t> hash)
 {
     auto entry = getKeyedEntry(subscopeKey);

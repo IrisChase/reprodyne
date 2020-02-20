@@ -19,8 +19,8 @@ table ValidationStringEntry
 table ValidationVideoSHA256Entry
 {
     frameId:int;
-    width:int;
-    height:int;
+    width:uint;
+    height:uint;
     sha256:[byte];
 }
 

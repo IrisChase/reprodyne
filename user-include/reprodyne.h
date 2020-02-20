@@ -67,9 +67,9 @@ void reprodyne_do_not_call_this_function_directly_validate_string(void* scope, c
 
 void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* scope,
                                                                             const char* key,
-                                                                            const int width,
-                                                                            const int height,
-                                                                            const int stride,
+                                                                            const unsigned int width,
+                                                                            const unsigned int height,
+                                                                            const unsigned int stride,
                                                                             void* bytes);
 
 void reprodyne_do_not_call_this_function_directly_assert_complete_read();

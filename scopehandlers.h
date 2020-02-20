@@ -44,7 +44,11 @@ public:
                                                                                    builder.CreateString(val)));
     }
 
-    void serialize(const int frameId, const char* subscopeKey, const int width, const int height, std::vector<int8_t> hash)
+    void serialize(const int frameId,
+                   const char* subscopeKey,
+                   const int unsigned width,
+                   const unsigned int height,
+                   std::vector<int8_t> hash)
     {
         subScopes[subscopeKey].validationVideoHash.push_back(CreateValidationVideoSHA256Entry(builder,
                                                                                               frameId,
@@ -89,8 +93,8 @@ public:
     void serialize(const int frameId, const char* subscopeKey, const char* val);
     void serialize(const int frameId,
                    const char* subscopeKey,
-                   const int width,
-                   const int height,
+                   const unsigned int width,
+                   const unsigned int height,
                    std::vector<int8_t> hash);
 
     void assertCompletReed();
