@@ -13,11 +13,13 @@ std::unique_ptr<reprodyne::ProgramPlayer> player;
 reprodyne_playback_failure_handler playbackErrorHandler = nullptr;
 std::string jumpSafeString;
 
+//(re: using std::strings in exceptions)
 //Playing it on the loose and easy with these exceptions because they are playback,
 // not memory errors. And it's prettier this way~
 
+
 //We need to catch all exceptions and deal with them here because you don't want
-// the library to leak through a C. And as such, we want to be longjmp safe.
+// the library to leak through a C boundary. And as such, we want to be longjmp safe.
 static void handlePlaybackErrorException(const reprodyne::PlaybackError& e)
 {
     if(!playbackErrorHandler)
