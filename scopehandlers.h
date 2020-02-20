@@ -26,7 +26,7 @@ class ScopeHandlerRecorder
 public:
     ScopeHandlerRecorder(flatbuffers::FlatBufferBuilder& builder): builder(builder) {} //builder builder builder
 
-    double intercept(const int frameId, const char* subscopeKey, const double indeterminate)
+    double intercept(const unsigned int frameId, const char* subscopeKey, const double indeterminate)
     {
         subScopes[subscopeKey].theDubbles.push_back(CreateIndeterminateDoubleEntry(builder,
                                                                                    frameId,
@@ -34,17 +34,17 @@ public:
         return indeterminate;
     }
 
-    //int intercept(const int frameId, const char* subscopeKey, const int indeterminate)
+    //int intercept(const unsigned int frameId, const char* subscopeKey, const int indeterminate)
     //{ return saveValue(subScopes[subscopeKey].theInts, frameId, indeterminate); }
 
-    void serialize(const int frameId, const char* subscopeKey, const char* val)
+    void serialize(const unsigned int frameId, const char* subscopeKey, const char* val)
     {
         subScopes[subscopeKey].serialStrings.push_back(CreateValidationStringEntry(builder,
                                                                                    frameId,
                                                                                    builder.CreateString(val)));
     }
 
-    void serialize(const int frameId,
+    void serialize(const unsigned int frameId,
                    const char* subscopeKey,
                    const int unsigned width,
                    const unsigned int height,
@@ -82,16 +82,16 @@ private:
     const KeyedScopeTapeEntry* getKeyedEntry(const char* subscopeKey);
 
     void checkReadPastEnd(const int size, const int pos);
-    void checkFrame(const int frameId1, const int frameId2, const char* moreSpecifically);
+    void checkFrame(const unsigned int frameId1, const unsigned int frameId2, const char* moreSpecifically);
 
 public:
     ScopeHandlerPlayer(BufferType* buf): myBuffer(buf) {}
 
-    double intercept(const int frameId, const char* subscopeKey, const double indeterminate);
-    //int intercept(const int frameId, const char* subscopeKey, const int indeterminate);
+    double intercept(const unsigned int frameId, const char* subscopeKey, const double indeterminate);
+    //int intercept(const unsigned int frameId, const char* subscopeKey, const int indeterminate);
 
-    void serialize(const int frameId, const char* subscopeKey, const char* val);
-    void serialize(const int frameId,
+    void serialize(const unsigned int frameId, const char* subscopeKey, const char* val);
+    void serialize(const unsigned int frameId,
                    const char* subscopeKey,
                    const unsigned int width,
                    const unsigned int height,

@@ -6,19 +6,19 @@ namespace reprodyne;
 
 table IndeterminateDoubleEntry
 {
-    frameId:int;
+    frameId:uint;
     val:double;
 }
 
 table ValidationStringEntry
 {
-    frameId:int;
+    frameId:uint;
     str:string;
 }
 
 table ValidationVideoSHA256Entry
 {
-    frameId:int;
+    frameId:uint;
     width:uint;
     height:uint;
     sha256:[byte];

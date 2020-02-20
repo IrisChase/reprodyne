@@ -8,7 +8,7 @@ namespace reprodyne
 template<typename ScopeContainer>
 class Program
 {
-    std::optional<int> frameCounter;
+    std::optional<unsigned int> frameCounter;
 
 protected:
     ScopeContainer scopes;
@@ -26,7 +26,7 @@ public:
         else ++(*frameCounter);
     }
 
-    int readFrameId()
+    unsigned int readFrameId()
     {
         if(!frameCounter)
             throw std::logic_error("Call to intercept before reprodyne_mark_frame is forbidden.");

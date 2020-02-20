@@ -43,7 +43,7 @@ const KeyedScopeTapeEntry* ScopeHandlerPlayer::getKeyedEntry(const char* subscop
 void ScopeHandlerPlayer::checkReadPastEnd(const int size, const int pos)
 { if(size == pos) throw PlaybackError(REPRODYNE_STAT_TAPE_PAST_END, "Read past end"); }
 
-void ScopeHandlerPlayer::checkFrame(const int frameId1, const int frameId2, const char* moreSpecifically)
+void ScopeHandlerPlayer::checkFrame(const unsigned int frameId1, const unsigned int frameId2, const char* moreSpecifically)
 {
     std::string msg = "Frame ID mismatch!";
     msg += moreSpecifically;
@@ -52,7 +52,7 @@ void ScopeHandlerPlayer::checkFrame(const int frameId1, const int frameId2, cons
     if(frameId1 != frameId2) throw PlaybackError(REPRODYNE_STAT_FRAME_MISMATCH, msg);
 }
 
-double ScopeHandlerPlayer::intercept(const int frameId, const char* subscopeKey, const double indeterminate)
+double ScopeHandlerPlayer::intercept(const unsigned int frameId, const char* subscopeKey, const double indeterminate)
 {
     auto entry = getKeyedEntry(subscopeKey);
     const auto ordinal = readPosMap[entry].indeterminateDoublePos++;
@@ -66,7 +66,7 @@ double ScopeHandlerPlayer::intercept(const int frameId, const char* subscopeKey,
     return indeterminateEntry->val();
 }
 
-void ScopeHandlerPlayer::serialize(const int frameId, const char* subscopeKey, const char* val)
+void ScopeHandlerPlayer::serialize(const unsigned int frameId, const char* subscopeKey, const char* val)
 {
     auto entry = getKeyedEntry(subscopeKey);
     const auto ordinal = readPosMap[entry].validationStringPos++;
@@ -89,7 +89,7 @@ void ScopeHandlerPlayer::serialize(const int frameId, const char* subscopeKey, c
     }
 }
 
-void ScopeHandlerPlayer::serialize(const int frameId,
+void ScopeHandlerPlayer::serialize(const unsigned int frameId,
                                    const char* subscopeKey,
                                    const unsigned int width,
                                    const unsigned int height,
