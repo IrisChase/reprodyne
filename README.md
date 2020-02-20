@@ -1,11 +1,11 @@
 # Reprodyne
-At least generally, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. Reprodyne is an Apache 2 licensed C/C++ library designed to capture real world test data and integrate it into automated test suites.
+At least generally, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. Reprodyne is an Apache 2 licensed C library, written in C++, designed to capture real world test data and integrate it into automated test suites.
 
-Reprodyne works by transforming non-deterministic funtions into deterministic ones, and serializing output from them for testing. This is done by "intercepting" indeterminate values in record mode, resupplying them in playback mode, and comparing the saved serialized outputs to the live ones.
+Reprodyne is not meant to *replace* existing test frameworks, but rather to augment their capabilities. It should be possible, at least in theory, to integrate it with any test framework.
 
-Reprodyne is not meant to *replace* your current preferred test framework, but rather to augment it's capabilities.
+From a high level, Reprodyne works by transforming non-deterministic funtions into deterministic functions, and saving their results for testing. "Interceptors" capture indeterminate values in record mode and resupply them in playback mode. "Validators" save values produced by the program in record mode, and compare against them in playback, signaling a playback failure if anything is different.
 
-The granularity of the tests is up to you, while I personally favor higher level end-to-end testing, Reprodyne should work perfectly well regardless of test scope.
+The Reprodyne API is defined entirely as macros, so that there are no dependencies left over in your release versions.
 
 
 # Build/Install
@@ -71,7 +71,7 @@ Subkeys aren't strictly necessary to make reprodyne work, but it's nice to be ab
 ## Custom playback failure handling and exception/longjmp safety
 I can guarantee that during a playback failure, that it is safe to longjmp out of the custom handler playback handler. Resources in these code paths are carefully managed and Reprodyne will not leak\* but obviously I cannot make that guarantee for anything actually calling the playback functions. The custom playback error handler is intended for seamless integration into your test framework, not for recovery (It *is* a test failure, afterall). The fact that it doesn't leak itself is almost a token guarantee.
 
-I can also guarantee that it's safe to throw a C++ exception out of the custom playback handler, provided that the library is ABI compatible with the executable it is being linked against, or at the very least, that the exception can safely pass through it without causing a fuss (The code paths calling the playback failure handler do not contain any try/catch blocks).
+I can also guarantee that it's safe to throw a C++ exception out of the custom playback handler, provided that the library is ABI compatible with the executable it is being linked against, or at the very least, that the exception can safely pass through it without causing a fuss (Reprodyne won't consume your exceptions).
 
 \*Unless I have a bad day or something
 
@@ -91,11 +91,12 @@ How you choose to integrate Reprodyne is a matter of style and design philosophy
 
 
 # Contributing
-Contributions are welcome, but I would prefer it if you contacted me (iris@enesda.com) before beginning work on anything non-trivial.
+Contributions are welcome, but I would prefer it if you contacted me (iris@enesda.com) before beginning work on anything non-trivial. I would hate for you to waste effort on something I can't pull because it is outside of the scope of the project.
 
 # Credits
-Concieved and developed by Iris Chase (iris@enesda.com)
+Created and developed by Iris Chase (iris@enesda.com)
 
 Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
 
 # License
+Reprodyne is licensed under the Apache 2 license.
