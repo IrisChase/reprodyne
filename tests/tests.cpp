@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include "user-include/reprodyne.h"
+#include "../user-include/reprodyne.h"
 
 #include "oopsiewhoopsie.h"
 

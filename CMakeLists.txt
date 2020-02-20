@@ -25,7 +25,7 @@ reprodyne.cpp
 schema_generated.h
 )
 
-set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "user-include/reprodyne.h")
+set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "/user-include/reprodyne.h")
 target_compile_definitions(reprodyne PUBLIC REPRODYNE_AVAILABLE)
 
 find_package(ZLIB REQUIRED)
@@ -38,13 +38,11 @@ target_link_libraries(reprodyne ${OPENSSL_CRYPTO_LIBRARY})
 
 if(DEFINED Catch2_FOUND)
     add_executable(reprodyne_tests
-        user-include/reprodyne.h
-        catchmain.cpp
+        tests/catchmain.cpp
+        tests/oopsiewhoopsie.h
 
-        oopsiewhoopsie.h
-
-        tests.cpp
-        videotests.cpp
+        tests/tests.cpp
+        tests/videotests.cpp
         )
     target_link_libraries(reprodyne_tests reprodyne)
 endif()
