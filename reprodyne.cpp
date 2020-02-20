@@ -189,6 +189,16 @@ void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* sco
                                                                        const int stride,
                                                                        void* bytes)
 {
+    std::vector<int8_t> hash(256);
+
+    //COMPUTE HASH
+
+    //MOTHERFUCKER
+    safeBlock<void>([&]
+    {
+        if(recorder)    recorder->serialize(scope, key, width, height, hash); //Variadic templates are badass.
+        else if(player)   player->serialize(scope, key, width, height, hash);
+    });
 
 }
 

@@ -69,7 +69,7 @@ double ScopeHandlerPlayer::intercept(const int frameId, const char* subscopeKey,
 void ScopeHandlerPlayer::serialize(const int frameId, const char* subscopeKey, const char* val)
 {
     auto entry = getKeyedEntry(subscopeKey);
-    const auto ordinal = readPosMap[entry].serialStringPos++;
+    const auto ordinal = readPosMap[entry].validationStringPos++;
 
     checkReadPastEnd(entry->validationStrings()->size(), ordinal);
 
@@ -89,6 +89,25 @@ void ScopeHandlerPlayer::serialize(const int frameId, const char* subscopeKey, c
     }
 }
 
+void ScopeHandlerPlayer::serialize(const int frameId,
+                                   const char* subscopeKey,
+                                   const int width,
+                                   const int height,
+                                   std::vector<int8_t> hash)
+{
+    auto entry = getKeyedEntry(subscopeKey);
+    const auto ordinal = readPosMap[entry].validationVideoHashPos++;
+
+    checkReadPastEnd(entry->validationVideoSHA256Hashes()->size(), ordinal);
+
+    auto serialEntry = entry->validationVideoSHA256Hashes()->Get(ordinal);
+
+    checkFrame(serialEntry->frameId(), frameId, "Validation video frame out of order!");
+
+    if(!std::equal(hash.begin(), hash.end(), serialEntry->sha256()->begin(), serialEntry->sha256()->end()))
+        throw PlaybackError(REPRODYNE_STAT_CALL_MISMATCH, "Stored video hash mismatch!");
+}
+
 void ScopeHandlerPlayer::assertCompletReed() //I'm, bored okay?
 {
     for(const KeyedScopeTapeEntry* entry : *myBuffer->keyedScopeTape())
@@ -96,7 +115,7 @@ void ScopeHandlerPlayer::assertCompletReed() //I'm, bored okay?
         const std::string subscopeKey = entry->key()->str();
         auto readPosIterator = readPosMap.find(entry);
 
-        auto assertEntry = [&](const int progSize, const int callTapeSize)
+        auto assertEntry = [&](const LastReadPos& pos)
         {
             auto generateErrorMsg = [&](const std::string type)
             {
@@ -107,14 +126,17 @@ void ScopeHandlerPlayer::assertCompletReed() //I'm, bored okay?
                 return ret;
             };
 
-            if(entry->indeterminateDoubles()->size() != progSize)
+            if(entry->indeterminateDoubles()->size() != pos.indeterminateDoublePos)
                 throw PlaybackError(REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ, generateErrorMsg("Program"));
-            if(entry->validationStrings()->size() != callTapeSize)
+
+            if(entry->validationStrings()->size() != pos.validationStringPos)
                 throw PlaybackError(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, generateErrorMsg("Call"));
+            if(entry->validationVideoSHA256Hashes()->size() != pos.validationVideoHashPos)
+                throw PlaybackError(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, generateErrorMsg("Video hash"));
         };
 
-        if(readPosIterator == readPosMap.end()) assertEntry(0, 0); //0 0 because we haven't read anything, obvs
-        else assertEntry(readPosIterator->second.indeterminateDoublePos, readPosIterator->second.serialStringPos);
+        if(readPosIterator == readPosMap.end()) assertEntry(LastReadPos()); //0 0 because we haven't read anything, obvs
+        else assertEntry(readPosIterator->second);
     }
 }
 

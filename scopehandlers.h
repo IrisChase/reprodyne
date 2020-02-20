@@ -69,7 +69,8 @@ private:
     struct LastReadPos
     {
         int indeterminateDoublePos = 0;
-        int serialStringPos = 0;
+        int validationStringPos = 0;
+        int validationVideoHashPos = 0;
     };
 
     std::map<const KeyedScopeTapeEntry*, LastReadPos> readPosMap;
@@ -86,6 +87,12 @@ public:
     //int intercept(const int frameId, const char* subscopeKey, const int indeterminate);
 
     void serialize(const int frameId, const char* subscopeKey, const char* val);
+    void serialize(const int frameId,
+                   const char* subscopeKey,
+                   const int width,
+                   const int height,
+                   std::vector<int8_t> hash);
+
     void assertCompletReed();
 };
 
