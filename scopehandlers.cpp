@@ -17,7 +17,8 @@ flatbuffers::Offset<OrdinalScopeTapeEntry> ScopeHandlerRecorder::buildOrdinalSco
         keyedEntries.push_back(reprodyne::CreateKeyedScopeTapeEntry(builder,
                                                                     subscopeKey,
                                                                     builder.CreateVector(subScopeEntry.theDubbles),
-                                                                    builder.CreateVector(subScopeEntry.serialStrings)));
+                                                                    builder.CreateVector(subScopeEntry.serialStrings),
+                                                                    builder.CreateVector(subScopeEntry.validationVideoHash)));
     }
 
     return reprodyne::CreateOrdinalScopeTapeEntry(builder, builder.CreateVectorOfSortedTables(&keyedEntries));

@@ -30,6 +30,7 @@ table KeyedScopeTapeEntry
 
     indeterminateDoubles:[IndeterminateDoubleEntry];
     validationStrings:[ValidationStringEntry];
+    validationVideoSHA256Hashes:[ValidationVideoSHA256Entry];
 }
 
 table OrdinalScopeTapeEntry

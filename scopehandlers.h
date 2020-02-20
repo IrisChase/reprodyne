@@ -18,6 +18,7 @@ class ScopeHandlerRecorder
     {
         std::vector<flatbuffers::Offset<IndeterminateDoubleEntry>> theDubbles;
         std::vector<flatbuffers::Offset<ValidationStringEntry>> serialStrings;
+        std::vector<flatbuffers::Offset<ValidationVideoSHA256Entry>> validationVideoHash;
     };
 
     std::map<std::string, SubScopeEntry> subScopes;
@@ -50,12 +51,14 @@ public:
                                                                                    builder.CreateString(val)));
     }
 
-    /*
-    void serialize(const int frameId, const char* subscopeKey, const int width, const int height, const char* hash)
+    void serialize(const int frameId, const char* subscopeKey, const int width, const int height, std::vector<int8_t> hash)
     {
-
+        subScopes[subscopeKey].validationVideoHash.push_back(CreateValidationVideoSHA256Entry(builder,
+                                                                                              frameId,
+                                                                                              width,
+                                                                                              height,
+                                                                                              builder.CreateVector(hash)));
     }
-    */
 
 
     flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry> buildOrdinalScopeFlatbuffer(flatbuffers::FlatBufferBuilder& builder);
