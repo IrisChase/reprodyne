@@ -208,7 +208,8 @@ void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* sco
 
         if(height < 1)      errorHahnDler("Useless height");
         if(width < 1)       errorHahnDler("Useless width");
-        if(stride < width)  errorHahnDler("Stride smaller than width");
+        if(stride < width)
+            errorHahnDler("Stride smaller than width");
         if(!bytes)          errorHahnDler("NULL data pointer");
 
         //int8_t because that's how flatbuffers likes it, I ain't judge.

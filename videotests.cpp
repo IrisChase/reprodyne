@@ -83,9 +83,9 @@ void validateHelper(Bitmap& bitbap, const char* key = basicKey)
 
     reprodyne_validate_bitmap_hash(nullptr,
                                    key,
-                                   bitbap.stride,
                                    bitbap.width,
                                    bitbap.height,
+                                   bitbap.stride,
                                    &bitbap.data[0]);
 }
 
@@ -206,13 +206,19 @@ TEST_CASE("Video frame failure conditions")
         }
         SECTION("Input frame dimensions are different")
         {
-            reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
-                                       "Accepted frame with too small a width",
-                                       [](Bitmap& bip) { --bip.width; });
+            SECTION("Width")
+            {
+                reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
+                                           "Accepted frame with too small a width",
+                                           [](Bitmap& bip) { --bip.width; });
+            }
+            SECTION("Height")
+            {
+                reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
+                                           "Accepted frame with too small a height",
+                                           [](Bitmap& bip) { --bip.height; });
+            }
 
-            reconfigureBitmap1validate(REPRODYNE_STAT_CALL_MISMATCH,
-                                       "Accepted frame with too small a height",
-                                       [](Bitmap& bip) { --bip.height; });
 
             //We'll just assume that if it can do either, it can do both
 
