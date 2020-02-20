@@ -4,12 +4,11 @@
 
 #include "user-include/reprodyne.h"
 
-#include "test-helpers.h"
+#include "oopsiewhoopsie.h"
 
 //Was going to test scope handling but honestly I think it's well
 // enough covered by the other validation tests. It's handling is generic
 // after all. Sure, this means we don't have "proper" blackbox testing, but be realistic.
-
 
 
 const auto videoTestDataPath = "reprodyne-video-test-data.rep";
@@ -23,12 +22,12 @@ struct Bitmap
     int height;
 };
 
+
 void readyRecord()
 {
     reprodyne_record();
     reprodyne_mark_frame();
     reprodyne_open_scope(nullptr);
-    reprodyne_declare_upper_video_frame_size(nullptr, basicKey, 2000, 2000);
 }
 
 void readyPlay()
@@ -80,13 +79,14 @@ void validateHelper(Bitmap& bitbap, const char* key = basicKey)
 
 
     //Randomize stride area? TODO
+    // (ehh, that should be in a fuzz test...)
 
-    reprodyne_validate_video_frame(nullptr,
+    reprodyne_validate_bitmap_hash(nullptr,
                                    key,
-                                   &bitbap.data[0],
+                                   bitbap.stride,
                                    bitbap.width,
                                    bitbap.height,
-                                   bitbap.stride);
+                                   &bitbap.data[0]);
 }
 
 void validationFail(const int code, const char* testFailureMsg, std::function<void()> fun)
@@ -156,17 +156,6 @@ TEST_CASE("Standard video validation")
         reprodyne_assert_complete_read();
         SUCCEED();
     }
-    SECTION("Declare upper video frame size is no-op in playback mode")
-    {
-        validateHelper(bitmap1);
-        readyPlay();
-
-        reprodyne_declare_upper_video_frame_size(nullptr, basicKey, 40000, 40000);
-
-        validateHelper(bitmap1);
-        reprodyne_assert_complete_read();
-        SUCCEED();
-    }
 }
 
 
@@ -184,44 +173,18 @@ TEST_CASE("Video frame failure conditions")
         });
     };
 
-    auto commonTests = [&]()
-    {
-        SECTION("Input frame stride smaller than width")
-        {
-            reconfigureBitmap1validate(REPRODYNE_STAT_INPUT_VIDEO_BAD_STRIDE,
-                                       "Accepted invalid stride for width",
-                                       [](Bitmap& bip) { bip.stride = bip.width - 1; }); //It is exactly smaller
-        }
-        SECTION("Input video frame larger than max declared size")
-        {
-            reconfigureBitmap1validate(REPRODYNE_STAT_INPUT_VIDEO_FRAME_TOO_LARGE,
-                                       "Too wide for declared size",
-                                       [](Bitmap& b) { ++b.width; });
-
-            reconfigureBitmap1validate(REPRODYNE_STAT_INPUT_VIDEO_FRAME_TOO_LARGE,
-                                       "Too tall for declared size",
-                                       [](Bitmap& b) { ++b.height; });
-        }
-    };
+    //TODO: test bad dimensions... But this is a runtime error soooooooo
 
 
-    SECTION("Record mode")
-    {
-        readyRecord();
-
-        commonTests();
-    }
     SECTION("Playback mode")
     {
         readyRecord();
         validateHelper(bitmap1);
         readyPlay();
 
-        commonTests();
-
         SECTION("Input video frame mismatch")
         {
-            validationFail(REPRODYNE_STAT_VALIDATION_MISMATCH,
+            validationFail(REPRODYNE_STAT_CALL_MISMATCH,
                            "Accepted input was different from recorded",
                            []() { validateHelper(bitmap2); });
         }
@@ -272,50 +235,4 @@ TEST_CASE("Video frame failure conditions")
             validateHelper(bitmap1);
         });
     }
-}
-
-
-TEST_CASE("Video input declare frame size")
-{
-    //These are only of concern in record mode, you don't have to declare size in playback mode.
-
-    reprodyne_record();
-    reprodyne_mark_frame();
-    reprodyne_open_scope(nullptr);
-
-
-    SECTION("Didn't set frame size")
-    {
-        validationFail(REPRODYNE_STAT_INPUT_VIDEO_DIMENS_UNDECLARED,
-                       "Reprodyne accepted validation call without a declared size... How",
-                       []()
-        {
-            validateHelper(bitmap1);
-        });
-    }
-    SECTION("Set frame size each frame")
-    {
-        reprodyne_declare_upper_video_frame_size(nullptr, basicKey, 2000, 2000);
-        validateHelper(bitmap1);
-        reprodyne_declare_upper_video_frame_size(nullptr, basicKey, 2000, 2000);
-        validateHelper(bitmap2);
-        reprodyne_declare_upper_video_frame_size(nullptr, basicKey, 2000, 2000);
-        validateHelper(bitmap3);
-
-        reprodyne_save(videoTestDataPath);
-
-        SUCCEED();
-    }
-    SECTION("Inconsistent declared frame sizes")
-    {
-        validationFail(REPRODYNE_STAT_INPUT_VIDEO_BAD_DIMENS,
-                       "Reprodyne accepted video dimensions that were different than previous declared",
-                       []()
-        {
-            reprodyne_declare_upper_video_frame_size(nullptr, basicKey, 2000, 2000);
-            validateHelper(bitmap1);
-            reprodyne_declare_upper_video_frame_size(nullptr, basicKey, 2001, 2000);
-        });
-    }
-    //"Set once but not again" is the default for the main test case.
 }

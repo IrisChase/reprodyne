@@ -2,7 +2,7 @@
 #define REPRODYNE_H
 
 #define REPRODYNE_STAT_FRAME_MISMATCH              100
-#define REPRODYNE_STAT_CALL_MISMATCH               101
+#define REPRODYNE_STAT_CALL_MISMATCH               101 //TODO: rename to validation
 #define REPRODYNE_STAT_EMPTY_TAPE                  102
 #define REPRODYNE_STAT_TAPE_PAST_END               103
 #define REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ   104
@@ -41,7 +41,7 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
     reprodyne_do_not_call_this_function_directly_validate_string(scope, key, call)
 
 #define reprodyne_validate_bitmap_hash(scope, key, width, height, stride, bytes) \
-    reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(scope, key, width, height, stride, byes)
+    reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(scope, key, width, height, stride, bytes)
 
 
 /*-------------------------------Implementation junk beyond this point-------------------------------*/

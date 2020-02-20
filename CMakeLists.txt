@@ -37,7 +37,15 @@ target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
 target_link_libraries(reprodyne ${OPENSSL_CRYPTO_LIBRARY})
 
 if(DEFINED Catch2_FOUND)
-    add_executable(reprodyne_tests user-include/reprodyne.h tests.cpp catchmain.cpp)
+    add_executable(reprodyne_tests
+        user-include/reprodyne.h
+        catchmain.cpp
+
+        oopsiewhoopsie.h
+
+        tests.cpp
+        videotests.cpp
+        )
     target_link_libraries(reprodyne_tests reprodyne)
 endif()
 
