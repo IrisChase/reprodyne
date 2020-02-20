@@ -66,11 +66,11 @@ double reprodyne_do_not_call_this_function_directly_intercept_indeterminate_doub
 void reprodyne_do_not_call_this_function_directly_validate_string(void* scope, const char* key, const char* cereal);
 
 void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* scope,
-                                                                            const char* key,
-                                                                            const unsigned int width,
-                                                                            const unsigned int height,
-                                                                            const unsigned int stride,
-                                                                            void* bytes);
+                                                                       const char* key,
+                                                                       const unsigned int width,
+                                                                       const unsigned int height,
+                                                                       const unsigned int stride,
+                                                                       void* bytes);
 
 void reprodyne_do_not_call_this_function_directly_assert_complete_read();
 
