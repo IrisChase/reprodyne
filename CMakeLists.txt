@@ -5,6 +5,14 @@ project(Reprodyne LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(REPRODYNE_MAJOR_VERSION 1)
+set(REPRODYNE_MINOR_VERSION 0)
+set(REPRODYNE_PATCH_VERSION 0)
+
+set(REPRODYNE_API_VERSION ${REPRODYNE_MAJOR_VERSION}.${REPRODYNE_MINOR_VERSION})
+
+set(REPRODYNE_VERSION ${REPRODYNE_API_VERSION}.${REPRODYNE_PATCH_VERSION})
+
 add_library(reprodyne
 user-include/reprodyne.h
 
@@ -25,7 +33,7 @@ reprodyne.cpp
 schema_generated.h
 )
 
-set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "/user-include/reprodyne.h")
+set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "${PROJECT_SOURCE_DIR}/user-include/reprodyne.h")
 target_compile_definitions(reprodyne PUBLIC REPRODYNE_AVAILABLE)
 
 find_package(ZLIB REQUIRED)
@@ -58,15 +66,21 @@ add_custom_command(DEPENDS schema.fbs
 add_custom_target(generated_code DEPENDS schema_generated.h)
 add_dependencies(reprodyne generated_code)
 
+set(CONF_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/user-include)
+
 install(TARGETS reprodyne EXPORT reprodyne
         ARCHIVE
-            DESTINATION lib/reprodyne1 #reprodyne MAJOR_VERSION...
+            DESTINATION lib/reprodyne${REPRODYNE_VERSION}
         PUBLIC_HEADER
-            DESTINATION include/reprodyne1)
+            DESTINATION include/reprodyne${REPRODYNE_API_VERSION})
 
-#Why can't I just add this to the above? It's a   ~ m y s t e r y ~
-install(FILES reprodyne-config.cmake DESTINATION lib/cmake/reprodyne)
+include(CMakePackageConfigHelpers)
 
-#Why can't I just add this to the above? It's a   ~ m y s t e r y ~
-install(EXPORT reprodyne DESTINATION lib/cmake/reprodyne)
+write_basic_package_version_file(reprodyne-config-version.cmake
+    VERSION ${REPRODYNE_VERSION}
+    COMPATIBILITY SameMajorVersion)
 
+install(FILES reprodyne-config.cmake ${CMAKE_BINARY_DIR}/reprodyne-config-version.cmake
+    DESTINATION lib/cmake/reprodyne${REPRODYNE_VERSION})
+
+install(EXPORT reprodyne DESTINATION lib/cmake/reprodyne${REPRODYNE_VERSION})

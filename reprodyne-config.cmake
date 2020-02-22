@@ -1,1 +1,2 @@
 include(${CMAKE_CURRENT_LIST_DIR}/reprodyne.cmake)
+set(REPRODYNE_INCLUDE_DIRS "@CONF_INCLUDE_DIR@")
