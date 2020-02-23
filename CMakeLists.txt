@@ -31,11 +31,12 @@ programhandlers.cpp
 
 reprodyne.cpp
 
-schema_generated.h
+${CMAKE_CURRENT_BINARY_DIR}/schema_generated.h
 )
 
 set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "${PROJECT_SOURCE_DIR}/user-include/reprodyne.h")
 target_compile_definitions(reprodyne PUBLIC REPRODYNE_AVAILABLE)
+target_include_directories(reprodyne PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 find_package(ZLIB REQUIRED)
 
@@ -46,10 +47,9 @@ find_package(Catch2)
 target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
 target_link_libraries(reprodyne ${OPENSSL_CRYPTO_LIBRARY})
 
-add_custom_command(DEPENDS schema.fbs
-                   COMMAND flatbuffers::flatc --cpp schema.fbs
-                   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/schema_generated.h
-                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/schema.fbs
+                   COMMAND flatbuffers::flatc --cpp ${CMAKE_CURRENT_SOURCE_DIR}/schema.fbs
+                   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/schema_generated.h )
 
 if(DEFINED Catch2_FOUND)
     add_executable(reprodyne_tests
