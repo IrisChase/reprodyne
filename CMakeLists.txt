@@ -38,6 +38,7 @@ set_target_properties(reprodyne PROPERTIES PUBLIC_HEADER "${PROJECT_SOURCE_DIR}/
 target_compile_definitions(reprodyne PUBLIC REPRODYNE_AVAILABLE)
 
 find_package(ZLIB REQUIRED)
+
 find_package(Flatbuffers REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Catch2)
@@ -47,7 +48,7 @@ target_link_libraries(reprodyne ${OPENSSL_CRYPTO_LIBRARY})
 
 add_custom_command(DEPENDS schema.fbs
                    COMMAND flatbuffers::flatc --cpp schema.fbs
-                   OUTPUT schema_generated.h
+                   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/schema_generated.h
                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(DEFINED Catch2_FOUND)
