@@ -60,6 +60,8 @@ static T safeBlock(std::function<T()> thingamajigulator)
         //fucc
         unknownErrorDie();
     }
+
+    std::terminate(); //Why won't you fuCKING DIE ALREADY?!?
 }
 
 template<>
