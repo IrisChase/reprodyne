@@ -1,7 +1,7 @@
 # Reprodyne
-Reprodyne is an Apache 2 licensed C/C++ library designed to capture the results of manual testing and integrate them into automated test suites.
+Reprodyne is an Apache 2 licensed C/C++ library designed to automate manual tests.
 
-Generally speaking, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. Reprodyne is designed to leverage this concept.
+Generally speaking, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. Reproducibility, however, is limited. Reprodyne is designed to "record" manual tests to later be played back automatically.
 
 Reprodyne is not meant to *replace* existing test frameworks, but rather to augment their capabilities. It should be possible, at least in theory, to integrate it with any test framework.
 
@@ -21,24 +21,53 @@ The Reprodyne API is defined entirely as a set of preprocessor macros, so that o
 - OpenSSL/Crypto
 - Catch2 (Optional. Required for testing Reprodyne itself)
 
-Reprodyne follows standard CMake usage
+Reprodyne follows standard CMake usage e.g. from your build directory:
 
-e.g.
+    cmake REPRODYNE-SOURCE-DIR
+    cmake --build .
+    sudo cmake --install .
 
---GIVE EXAMPLE--
+Reprodyne will be installed in the following directories:
 
-## Running the self tests
+    /usr/local/lib
+    /usr/local/include
 
-./reprodyne_tests
+You can optionally provide a prefix for the install path:
 
-## Installing the library
-blah blah bla
+    cmake --install . --prefix THE-DIRECTORY-YOU-WANT
 
-# Usage A.K.A. not so brief
-Reprodyne allows you to "intercept" indeterminate values (System events, network packets, time values, etc), serialize function calls utilizing this data, and then save to "tape". In playback mode, the indeterminates are then fed back into the functions in the order that they were originally created, and the serialized calls are then compared to the saved ones to ensure that the functions are behaving as before.
+Which will of course prefix the install path as such:
+
+    THE-DIRECTORY-YOU-WANT/usr/local/lib
+    THE-DIRECTORY-YOU-WANT/usr/local/include
+
+---
+**Note**: If you want to explore the code for the library itself, you will probably want to build it first as the source calls generated header code and your tools might get mad at you if it doesn't exist yet.
+
+## Running The Library Tests
+
+Simply run the "reprodyne_tests" executable, located in the build directory:
+
+    ./reprodyne_tests
 
 
+# Usage/Theory
+Reprodyne itself is quite simple, but you must first understand the theory behind it as it is designed around some not-so-obvious-at-first-glance problems.
 
+
+## Scopes, Frames and Subscope keys OH MAI!
+
+Data in Reprodyne is aligned by the combination of the the current *frame*, *scope*, and *subscope*.
+
+Playback data is bound to a *scope*, which is represented by a pointer. The idea is that for a given scope you have a set of indeterminates going in, and values coming out, independent of the order of execution of any other scope currently being executed. This reduces coupling between the tests and the absolute order of execution.
+
+Frames are the synchronization mechanism for scopes. The intention being that for a given go-round of the program's *main outer loop*, all scopes should be done processing whatever it is that they are responsible for, *for a given iteration*. Again, frames are *only* to be marked at a high level of the program.
+
+Subscopes follow the same rules as scopes except: They are addressed by a their parent scope and a string key. A given scope (Which is most commonly just an object) might have several things going on where the order of execution is not *inherently* serial. In this case, we don't want Reprodyne to enforce the order of execution, otherwise it would limit our ability to refactor. To solve this problem, the order of execution is only tracked on the subscope level. This prevents tight coupling of the tests to arbitrary design decisions that don't affect the result we care about. One nice side-benefit of this is that naming the subscope allows Reprodyne to tell you exactly what part of the scope failed and to a limited extent, how.
+
+You may think that an object should only do one thing, and that anything else should be handled by other objects. Child objects, perhaps. This was actually the driving motivion *for* subscopes. Working this way, you simply register the scope of a primary object, and then any child objects use subscopes, this way the *hierarchy* of excution is preserved but not the order of the subscopes. You could track the addresses of all these child objects, but that could become unwieldy, it's hard enough to guarantee the order of allocation of a bunch of root objects, much less all of their children, grandchildren, etc...
+
+## Interceptors and Validators
 ## A trivial Example
 (maybe delete the above paragraph)
 
@@ -46,28 +75,21 @@ The following is a minimal example
 
 (snip with comments)
 
-### A word on linking against Reprodyne (Important)
-The Reprodyne api is defined entirely as two sets of macros in the "reprodyne.h" header, switched by defining the macro "REPRODYNE_AVAILABLE". One set expands to sane defaults so that Reprodyne doesn't end up in your release binaries, and this is the default setting. The other expands to the internal Reprodyne function calls and is enabled by defining the switch.
+### Making Reprodyne Available to Your Code
 
-For Reprodyne to be usable in your project, you must define the switch macro (intended to be passed to your compiler) and link against the library itself.
+Reprodyne is like assert in that it is defined by macros and to be compiled away when it is no longer needed. But unlike assert, the Reprodyne macros expand to no-ops by default. In order to use Reprodyne you must define the following:
 
-The header is safe to use without linking against the library as long as the switch is not defined.
+    REPRODYNE_AVAILABLE
 
-## Scopes, Frames and Subkeys oh my!
+This is intended to be provided by your build system to switch between builds easily.
 
-Data in Reprodyne is aligned by the combination of the the current *frame*, *scope*, and *subkey*.
+## Potentially Painful Gotchas
 
-The frame is hard to describe god damn it.
+reprodyne_open_scope tracks *the temporal position of objects.* That is, Reprodyne saves the *order in which the scopes are opened.* The actual values of the pointers is irrelevant. The only requirement is that scopes *must* be opened in the same order every time.
 
-A lot of functions in a given frame don't have to be called in order, they just all have to be called during the frame, and the frame has to return a given output. If we required every single interception to be called in the same order that it was when the test data was generated, you would lose a ton of flexibility in refactoring. So, we don't do that. Instead, each call to intercept or serialize has a scope and a subkey, which identifies a specific tape, and the reading of this tape ignores the current read status of all the other tapes. All data in a tape that is aligned to a given frame has to be read before data aligned to the next frame can be read out; attempts to read data that belongs to the previous frame triggers a playback failure.
+One pernicious edge-case that may not seem obvious is that it is possible for pointers to be re-used for different objects (E.g. a memory pool). If a pointer is already tracked during a call to reprodyne_open_scope, Reprodyne will *shadow* it with a new scope. It is possible that a pointer is reused in one run of the application and not another, or in record mode but not in subsequent playbacks. Again, this is fine because the scopes only track the *temporal location* of the pointers and the actual address is irrelevant. They could all be null pointers or arbitrary integers so long as they *represent* one and only one scope at a time.
 
-A scope is a void pointer, meant to point to identify some resource allocated in a deterministic order. It's a bit hard to explain conceptually, so just realize it's usually something like a "this" pointer in C++, which identifies the object currently making intercept and or serialize calls. The order of allocation is important because it is used to identify the same object from multiple runs.
-
-If you don't have a object to bind the tapes to, then you can just pass a null pointer.
-
-open\_scope "shadows" duplicate pointers, i.e. if you call it twice with the same pointer, all the data that was written to the previous version of the scope will be preserved, but will be effectively locked from being written to anymore. This is to protect you in case you've deallocated a resource, and by a stroke of bad luck get the same pointer address for a new version of the same *kind* of resource.
-
-Subkeys aren't strictly necessary to make reprodyne work, but it's nice to be able to declare different streams of indeterminates in a given object as idempotent; again, this affords you flexibility in refactoring.
+You must call mark frame at least once, even if you have a case where the "frame" model doesn't make sense.
 
 
 
@@ -94,7 +116,7 @@ How you choose to integrate Reprodyne is a matter of style and design philosophy
 
 
 # Contributing
-Contributions are welcome, but I would prefer it if you contacted me (iris@enesda.com) before beginning work on anything non-trivial. I would hate for you to waste effort on something I can't pull because it is outside of the scope of the project.
+Contributions are welcome, but I would prefer it if you contacted me (iris@enesda.com) before beginning work on anything non-trivial. I would hate for you to waste effort on something I can't pull because it's not how I want to proceed.
 
 # Credits
 Created and developed by Iris Chase (iris@enesda.com)
