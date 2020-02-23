@@ -87,7 +87,7 @@ This is intended to be provided by your build system to switch between builds ea
 
 reprodyne_open_scope tracks *the temporal position of objects.* That is, Reprodyne saves the *order in which the scopes are opened.* The actual values of the pointers is irrelevant. The only requirement is that scopes *must* be opened in the same order every time.
 
-One pernicious edge-case that may not seem obvious is that it is possible for pointers to be re-used for different objects (E.g. a memory pool). If a pointer is already tracked during a call to reprodyne_open_scope, Reprodyne will *shadow* it with a new scope. It is possible that a pointer is reused in one run of the application and not another, or in record mode but not in subsequent playbacks. Again, this is fine because the scopes only track the *temporal location* of the pointers and the actual address is irrelevant. They could all be null pointers or arbitrary integers so long as they *represent* one and only one scope at a time.
+One pernicious edge-case that may not seem obvious is that it is possible for pointers to be re-used for different objects (E.g. a memory pool). If a pointer is already tracked during a call to reprodyne_open_scope, Reprodyne will *shadow* it with a new scope. It is possible that a pointer is reused in one run of the application and not another, or in record mode but not in subsequent playbacks. Again, this is fine because the scopes only track the *temporal location* of the pointers and the actual address is irrelevant. They could all be null pointers or arbitrary integers so long as they *represent* one and only one scope at a time and in order.
 
 You must call mark frame at least once, even if you have a case where the "frame" model doesn't make sense.
 
