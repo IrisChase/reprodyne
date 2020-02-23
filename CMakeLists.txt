@@ -64,7 +64,7 @@ endif()
 
 
 
-install(TARGETS reprodyne EXPORT reprodyne
+install(TARGETS reprodyne EXPORT reprodyne-targets
         ARCHIVE
             DESTINATION lib/reprodyne${REPRODYNE_VERSION}
         PUBLIC_HEADER
@@ -82,5 +82,5 @@ configure_file(reprodyne-config.cmake.in
 install(FILES ${CMAKE_BINARY_DIR}/reprodyne-config.cmake ${CMAKE_BINARY_DIR}/reprodyne-config-version.cmake
     DESTINATION lib/cmake/reprodyne${REPRODYNE_VERSION})
 
-install(EXPORT reprodyne
+install(EXPORT reprodyne-targets
     DESTINATION lib/cmake/reprodyne${REPRODYNE_VERSION})
