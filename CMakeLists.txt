@@ -66,13 +66,13 @@ add_custom_command(DEPENDS schema.fbs
 add_custom_target(generated_code DEPENDS schema_generated.h)
 add_dependencies(reprodyne generated_code)
 
-set(CONF_INCLUDE_DIRS ${PROJECT_SOURCE_DIR}/user-include)
+set(REPRODYNE_USER_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/reprodyne${REPRODYNE_API_VERSION})
 
 install(TARGETS reprodyne EXPORT reprodyne
         ARCHIVE
             DESTINATION lib/reprodyne${REPRODYNE_VERSION}
         PUBLIC_HEADER
-            DESTINATION include/reprodyne${REPRODYNE_API_VERSION})
+            DESTINATION ${REPRODYNE_USER_INCLUDE_DIRS})
 
 include(CMakePackageConfigHelpers)
 
@@ -80,7 +80,11 @@ write_basic_package_version_file(reprodyne-config-version.cmake
     VERSION ${REPRODYNE_VERSION}
     COMPATIBILITY SameMajorVersion)
 
-install(FILES reprodyne-config.cmake ${CMAKE_BINARY_DIR}/reprodyne-config-version.cmake
+configure_file(reprodyne-config.cmake.in
+    ${CMAKE_BINARY_DIR}/reprodyne-config.cmake @ONLY)
+
+install(FILES ${CMAKE_BINARY_DIR}/reprodyne-config.cmake ${CMAKE_BINARY_DIR}/reprodyne-config-version.cmake
     DESTINATION lib/cmake/reprodyne${REPRODYNE_VERSION})
 
-install(EXPORT reprodyne DESTINATION lib/cmake/reprodyne${REPRODYNE_VERSION})
+install(EXPORT reprodyne
+    DESTINATION lib/cmake/reprodyne${REPRODYNE_VERSION})
