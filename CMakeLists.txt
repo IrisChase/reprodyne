@@ -45,6 +45,11 @@ find_package(Catch2)
 target_link_libraries(reprodyne ${ZLIB_LIBRARIES})
 target_link_libraries(reprodyne ${OPENSSL_CRYPTO_LIBRARY})
 
+add_custom_command(DEPENDS schema.fbs
+                   COMMAND flatbuffers::flatc --cpp schema.fbs
+                   OUTPUT schema_generated.h
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 if(DEFINED Catch2_FOUND)
     add_executable(reprodyne_tests
         tests/catchmain.cpp
@@ -56,18 +61,6 @@ if(DEFINED Catch2_FOUND)
     target_link_libraries(reprodyne_tests reprodyne)
 endif()
 
-
-add_custom_command(DEPENDS schema.fbs
-                   COMMAND flatbuffers::flatc --cpp schema.fbs
-                   OUTPUT schema_generated.h
-                   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-
-#You'll definitely want to build this target if you wanna work with the code.
-#This gets rebuilt every time you compile but the flatbuffers compiler is p.fast.
-#(TODO: Yeah but, the C++ compiler that rebuilds everything based on it's
-#       timestamp... Is not.)
-add_custom_target(generated_code DEPENDS schema_generated.h)
-add_dependencies(reprodyne generated_code)
 
 
 install(TARGETS reprodyne EXPORT reprodyne
