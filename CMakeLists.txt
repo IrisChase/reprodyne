@@ -10,8 +10,9 @@ set(REPRODYNE_MINOR_VERSION 0)
 set(REPRODYNE_PATCH_VERSION 0)
 
 set(REPRODYNE_API_VERSION ${REPRODYNE_MAJOR_VERSION}.${REPRODYNE_MINOR_VERSION})
-
 set(REPRODYNE_VERSION ${REPRODYNE_API_VERSION}.${REPRODYNE_PATCH_VERSION})
+
+set(REPRODYNE_USER_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/reprodyne${REPRODYNE_API_VERSION})
 
 add_library(reprodyne
 user-include/reprodyne.h
@@ -66,7 +67,6 @@ add_custom_command(DEPENDS schema.fbs
 add_custom_target(generated_code DEPENDS schema_generated.h)
 add_dependencies(reprodyne generated_code)
 
-set(REPRODYNE_USER_INCLUDE_DIRS ${CMAKE_INSTALL_PREFIX}/include/reprodyne${REPRODYNE_API_VERSION})
 
 install(TARGETS reprodyne EXPORT reprodyne
         ARCHIVE
