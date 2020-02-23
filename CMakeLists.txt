@@ -64,6 +64,8 @@ add_custom_command(DEPENDS schema.fbs
 
 #You'll definitely want to build this target if you wanna work with the code.
 #This gets rebuilt every time you compile but the flatbuffers compiler is p.fast.
+#(TODO: Yeah but, the C++ compiler that rebuilds everything based on it's
+#       timestamp... Is not.)
 add_custom_target(generated_code DEPENDS schema_generated.h)
 add_dependencies(reprodyne generated_code)
 
