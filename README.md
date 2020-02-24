@@ -9,7 +9,7 @@ From a high level, Reprodyne works by transforming non-deterministic funtions in
 
 The Reprodyne API is defined entirely as a set of preprocessor macros, so that once you're done testing, they gracefully expand into no-ops and there is no longer a need to link against the library.
 
-# Use Cases
+# Imagine Reprodyne/Use Cases
 
 blah blah blah
 
@@ -45,6 +45,10 @@ Which will of course prefix the install path as such:
     THE-DIRECTORY-YOU-WANT/usr/local/lib
     THE-DIRECTORY-YOU-WANT/usr/local/include
 
+Or you can specify the lib/include paths directly:
+
+    IRIS YOU GOTTA ADD THIS TO THE CMAKE FILE
+
 ---
 **Note**: If you want to explore the code for the library itself, you will probably want to build it first as the source calls generated header code and your tools might get mad at you if it doesn't exist yet.
 
@@ -56,15 +60,40 @@ Simply run the "reprodyne_tests" executable located in the build directory:
     ./reprodyne_tests
 
 ## Including Reprodyne in Your Projects
+---
+### CMake Examples
 
     find_package(reprodyne 1.0 REQUIRED)
     target_link_library(YOUR-TARGET reprodyne)
+
+If it is found then the include director(ies) will be in REPRODYNE_INCLUDE_DIRS:
+
     target_include_directories(YOUR-TARGET ${REPRODYNE_INCLUDE_DIRS})
+
+To toggle usage of the library macros, define REPRODYNE_AVAILABLE:
+
     target_compile_definitions(YOUR-TARGET PRIVATE REPRODYNE_AVAILABLE)
 
+---
+### And for The Love of God
+
+Please don't do this:
+
+    <reprodyne1.1/reprodyne.h>
+
+Minor versions should be backwards compatible, and with this you are hardcoding an exact minor version requirement.
+
+With or without CMake, you should be including reprodyne as such:
+
+    <reprodyne.h>
+
+If you're not using CMake do whatever you have to do to point your non-CMake peasant-build system to the directory containing this header.
 
 # Usage/Theory
-Reprodyne itself is quite simple, but you must first understand the theory behind it as it is designed around some not-so-obvious-at-first-glance problems.
+
+As far as I can see, there are two ways to use Reprodyne. You can either integrate the interceptors and validators directly into your codebase (Which has first-class support, that is why the macros can compile into no-ops), or you can write mocks that use them behind the scenes. I will not dictate what the "correct" approach is, as this is a decision best left to the particular developer(s) of a given project.
+
+Reprodyne itself is quite simple, but you must first understand the theory behind it, as it is designed around some not-so-obvious-at-first-glance problems.
 
 
 ## Scopes, Frames and Subscope keys OH MAI!
@@ -112,19 +141,9 @@ I can also guarantee that it's safe to throw a C++ exception out of the custom p
 
 \*Unless I have a bad day or something
 
-## Tips for effective use
+## Reference Documentation and Getting Help.
 
-You want to avoid causing Reprodyne to regard idempotent calls as non-idempotent, causing a call mismatch in playback mode if you happen to change the order of things or if the order is non-deterministic to begin with. This is what scopes and subkeys are for, they provide indepedent tapes, aligned to the current frame, with which to validate in any order (Again, as long as it's aligned to the current *frame*).
-
-You want to wait until the last minute to serialize calls to give your code flexibility in change without invalidating tests. Remember, scope keys aren't for debug information per se, they're for idempotency. Don't use several sub-keys for effectively identical operations that propogate from different regions, all the serialize calls are for is to make sure that the *output* of the program is identical! It doesn't matter how we got there, just that the result is the same, and if the serialized calls rely too much on a particular code path, then you lose the flexibility to change the path to the destination.
-
-## Ideas for integration
-
-The laziest way is to just inject reprodyne calls into your functions as needed, to track the indeterminate values and calls.
-
-Of course, there is nothing stopping you from using reprodyne as a backend for a mock. The mocks could be injected in either mode and provide the interception and call matching opaquely to the rest of the application.
-
-How you choose to integrate Reprodyne is a matter of style and design philosophy. I'm generally too lazy for mocks, but you should do what you think is right for your project.
+For reference, the reprodyne.h header documents all of the interface calls and is a short read. If you have any questions after that, in lieu of emailing me, please consider opening it as a bug in the tracker so that others with your question can benefit from the answer.
 
 
 # Contributing
@@ -136,4 +155,4 @@ Created and developed by Iris Chase (iris@enesda.com)
 Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
 
 # License
-Reprodyne is licensed under the Apache 2 license.
+Reprodyne is licensed under the Apache 2.0 license.
