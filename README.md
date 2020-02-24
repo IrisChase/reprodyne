@@ -48,11 +48,15 @@ Which will of course prefix the install path as such:
 ---
 **Note**: If you want to explore the code for the library itself, you will probably want to build it first as the source calls generated header code and your tools might get mad at you if it doesn't exist yet.
 
+
 ## Running The Library Tests
 
-Simply run the "reprodyne_tests" executable, located in the build directory:
+Simply run the "reprodyne_tests" executable located in the build directory:
 
     ./reprodyne_tests
+
+## Including Reprodyne in Your Projects
+f
 
 
 # Usage/Theory
