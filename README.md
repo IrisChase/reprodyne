@@ -56,7 +56,11 @@ Simply run the "reprodyne_tests" executable located in the build directory:
     ./reprodyne_tests
 
 ## Including Reprodyne in Your Projects
-f
+
+    find_package(reprodyne 1.0 REQUIRED)
+    target_link_library(YOUR-TARGET reprodyne)
+    target_include_directories(YOUR-TARGET ${REPRODYNE_INCLUDE_DIRS})
+    target_compile_definitions(YOUR-TARGET PRIVATE REPRODYNE_AVAILABLE)
 
 
 # Usage/Theory
