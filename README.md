@@ -9,15 +9,6 @@ From a high level, Reprodyne works by transforming non-deterministic funtions in
 
 The Reprodyne API is defined entirely as a set of preprocessor macros, so that once you're done testing, they gracefully expand into no-ops and there is no longer a need to link against the library.
 
-# Imagine Reprodyne/Use Cases
-
-
-- Can be used to treat parvo in dogs*
-- Paint your house with it, fuck I don't know.
-
-*This statement has not been evaluated by The American Veterinary Association of America.
-
-
 # Build/Install
 #### Required toolchain:
 - C++ compiler with C++17 support
@@ -112,30 +103,91 @@ You may think that an object should only do one thing, and that anything else sh
 
 ## Interceptors and Validators
 
-An intercept function takes a value, and in record mode, saves it against the scope/subscope pair, along with the frame ID, and then returns it to your code like nothing ever happened.
+In record mode, an intercept function takes a value, saves it against the scope/subscope pair, along with the frame ID, and then returns it to your code like nothing ever happened.
 
 In playback mode, it is exactly the same *interface,* but the intercepted value is discarded and Reprodyne attempts to retrieve one saved previously to be returned so your code runs exactly as it did in record mode.
 
-Care must be taken to ensure that you intercept all *true* indeterminate values. Otherwise you'll simply get "almost deterministic" behaviour.
+Care must be taken to ensure that you intercept all *true* indeterminate values. Otherwise you'll get "almost deterministic" behaviour.
 
 If anything is amiss with the number of calls to a given scope, or there is a difference in frame ID or the like, then a playback error will be raised.
 
-Validators are just like interceptors, but they return nothing, and so in playback mode they attempt to compare the provided value against a stored one.
+Validators are just like interceptors, but they return nothing, and so in playback mode they attempt to compare the provided value against the stored one.
 
 Errors are likewise the same for validators but they will additionally raise a playback error if the stored value is different than the provided one.
 
 Currently, validators can validate strings and hashes of bitmaps.
 
-## A trivial Example
-(maybe delete the above paragraph)
+## Learn by Example
 
-The following is a minimal example
+There are two classes of functions in Reprodyne. Functions intended to be called by the test administration code, and functions intended to be called within the code under test.
 
-(snip with comments)
+Your code under test might look something like this:
+
+    #include <iostream>
+    #include <reprodyne.h>
+    #include "someruntimeclass.h"
+    #include "somesortofsystemeventheader.h"
+
+    void processSomething()
+    {
+        SomeRuntimeClass rt;
+        
+        while(rt.yupStillRunning())
+        {
+            reprodyne_mark_frame();
+
+            const auto eventCode = reprodyne_intercept_double(&rt, "System Event", getSystemEvent());
+
+            rt.reactToSystemEvent(eventCode);
+
+            std::cout << rt.resultString() << std::endl;
+
+            reprodyne_validate_string(&rt, "Processing Result", rt.resultString());
+        }
+    }
+
+
+There are four states this code could be under when executed:
+
+- Reprodyne is not compiled in, and the calls are no-ops.
+- You're in record mode and the values are being captured, a test failure is not possible, this is where you test the executable manually to verify that it is functioning as intended.
+- You're in playback mode and the values are being intercepted/validated, a playback failure will be raised if there is an issue.
+- Reprodyne is compiled in but the setup code hasn't been called by the test setup code. This will fail.
+
+
+For record mode, you probably want a custom executable for generating the test data, where the main function might look something like this:
+
+    #include <reprodyne.h>
+
+    void processSomething();
+
+    int main(int argc, char** argv)
+    {
+        reprodyne_record();
+
+        processSomething();
+
+        reprodyne_save("PATH-TO-SAVE-TEST-DATA.rep");
+
+        return 0;
+    }
+
+It is customary to name the file ".rep", but is not required, Reprodyne is able to recognize one of it's own.
+
+Then to execute the test:
+
+    void test()
+    {
+        reprodyne_play("PATH-TO-SAVED-TEST-DATA.rep");
+
+        processSomething();
+
+        reprodyne_assert_complete_read(); //Make sure the process didn't exit early.
+    }
 
 ### Making Reprodyne Available to Your Code
 
-Reprodyne is like assert in that it is defined by macros and is to be compiled away when it is no longer needed. But unlike assert, the Reprodyne macros expand to no-ops by default. In order to use Reprodyne you must define the following:
+Reprodyne macros expand to no-ops by default. In order to use Reprodyne you must define the following:
 
     REPRODYNE_AVAILABLE
 
