@@ -1,7 +1,7 @@
 # Reprodyne
-Reprodyne is an Apache 2 licensed C/C++ library designed to automate manual tests.
+Reprodyne is an Apache 2 licensed C/C++ library for automating manual tests.
 
-Generally speaking, real world data is both easier and faster to generate, and more useful to test against, than artificial test conditions written in sterile environments. Reproducibility, however, is limited. Reprodyne is designed to "record" manual tests to later be played back automatically.
+Generally speaking, real world data is both easier and faster to generate, and more interesting to test against, than artificial test conditions written in sterile environments. Reproducibility, however, is limited. Reprodyne solves this problem by "recording" manual tests to later be played back automatically.
 
 Reprodyne is not meant to *replace* existing test frameworks, but rather to augment their capabilities. It should be possible, at least in theory, to integrate it with any test framework.
 
@@ -11,7 +11,11 @@ The Reprodyne API is defined entirely as a set of preprocessor macros, so that o
 
 # Imagine Reprodyne/Use Cases
 
-blah blah blah
+
+- Can be used to treat parvo in dogs*
+- Paint your house with it, fuck I don't know.
+
+*This statement has not been evaluated by The American Veterinary Association of America.
 
 
 # Build/Install
@@ -109,6 +113,21 @@ Subscopes follow the same rules as scopes except: They are addressed by a their 
 You may think that an object should only do one thing, and that anything else should be handled by other objects. Child objects, perhaps. This was actually the driving motivion *for* subscopes. Working this way, you simply register the scope of a primary object, and then any child objects use subscopes, this way the *hierarchy* of excution is preserved but not the order of the subscopes. You could track the addresses of all these child objects, but that could become unwieldy, it's hard enough to guarantee the order of allocation of a bunch of root objects, much less all of their children, grandchildren, etc...
 
 ## Interceptors and Validators
+
+An intercept function takes a value, and in record mode, saves it against the scope/subscope pair, along with the frame ID, and then returns it to your code like nothing ever happened.
+
+In playback mode, it is exactly the same *interface,* but the intercepted value is discarded and Reprodyne attempts to retrieve one saved previously to be returned so your code runs exactly as it did in record mode.
+
+Care must be taken to ensure that you intercept all *true* indeterminate values. Otherwise you'll simply get "almost deterministic" behaviour.
+
+If anything is amiss with the number of calls to a given scope, or there is a difference in frame ID or the like, then a playback error will be raised.
+
+Validators are just like interceptors, but they return nothing, and so in playback mode they attempt to compare the provided value against a stored one.
+
+Errors are likewise the same for validators but they will additionally raise a playback error if the stored value is different than the provided one.
+
+Currently, validators can validate strings and hashes of bitmaps.
+
 ## A trivial Example
 (maybe delete the above paragraph)
 
@@ -118,30 +137,44 @@ The following is a minimal example
 
 ### Making Reprodyne Available to Your Code
 
-Reprodyne is like assert in that it is defined by macros and to be compiled away when it is no longer needed. But unlike assert, the Reprodyne macros expand to no-ops by default. In order to use Reprodyne you must define the following:
+Reprodyne is like assert in that it is defined by macros and is to be compiled away when it is no longer needed. But unlike assert, the Reprodyne macros expand to no-ops by default. In order to use Reprodyne you must define the following:
 
     REPRODYNE_AVAILABLE
 
-This is intended to be provided by your build system to switch between builds easily.
+It is recommended that this be defined by your build system/compiler, as it needs to be defined everywhere Reprodyne is used, not just in your test code but your code under test.
 
-## Potentially Painful Gotchas
+## Gotchas
 
 reprodyne_open_scope tracks *the temporal position of objects.* That is, Reprodyne saves the *order in which the scopes are opened.* The actual values of the pointers is irrelevant. The only requirement is that scopes *must* be opened in the same order every time.
 
-One pernicious edge-case that may not seem obvious is that it is possible for pointers to be re-used for different objects (E.g. a memory pool). If a pointer is already tracked during a call to reprodyne_open_scope, Reprodyne will *shadow* it with a new scope. It is possible that a pointer is reused in one run of the application and not another, or in record mode but not in subsequent playbacks. Again, this is fine because the scopes only track the *temporal location* of the pointers and the actual address is irrelevant. They could all be null pointers or arbitrary integers so long as they *represent* one and only one scope at a time and in the same order.
+One pernicious edge-case that may not seem obvious is that it is possible for pointers to be re-used for different objects (E.g. a memory pool). If a pointer is already tracked during a call to reprodyne_open_scope, Reprodyne will *shadow* it with a new scope. It is possible that a pointer is reused in one run of the application and not another, or in record mode but not in subsequent playbacks. Again, this is fine because the scopes only track the *temporal location* of the pointers and the actual address is irrelevant. They could all be null pointers or arbitrary integers so long as they *represent* one and only one scope at a time and that those scopes are always represented in the same order.
 
 You must call mark frame at least once, even if you have a case where the "frame" model doesn't make sense.
 
+## Custom Playback Failure Handling and Exception/Longjmp Safety
+
+It may be convienient to provide a custom playback failure handler to help weave Reprodyne into whatever test framework/ungodly mess you are dealing with. But it's not recommended unless you have to. Reprodyne by default prints a message to stderr and then aborts the executable, which most test frameworks should be able to handle out of the box. But read on if you must...
+
+It is safe to longjmp out of the custom playback failure handler. The only hard rule is that it cannot simply return, if it tries, the application will then terminate.
+
+Exceptions... Well, they work on my machine.
+
+Reprodyne will not catch any user exceptions from that handler and the code path for the error handler is written to be longjmp safe, so of course it won't leak given an exception, but I am in no position to guarantee whether or not an exception from a binary with an incompatible exception model will pass through without causing a fuss; it might work, it might not.
+
+If you run into issues with C++ exceptions, I'd recommend just using setjmp/longjmp if you must retrieve control in this way.
+
+## Reprodyne is no Testing Panacea
+
+One of the great difficulties with Reprodyne is the fact that it will necessarily make your code less flexible and more tightly coupled (Of course, show me an automated testing method that doesn't).
+
+One example of a test failure would be if you manage to remove extraneous iterations from your main loop, which will invalidate the playback data.
+
+The only way to alieviate these problems it to just be smart in how you use Reprodyne, which unfortunately is something I cannot teach you.
+
+I've tried to make it as flexible as possible and in the future with more experience using it, I hope to make it more so. For now at least, I feel as though the benefits of Reprodyne outweigh these concerns.
 
 
-## Custom playback failure handling and exception/longjmp safety
-I can guarantee that during a playback failure, that it is safe to longjmp out of the custom handler playback handler. Resources in these code paths are carefully managed and Reprodyne will not leak\* but obviously I cannot make that guarantee for anything actually calling the playback functions. The custom playback error handler is intended for seamless integration into your test framework, not for recovery (It *is* a test failure, afterall). The fact that it doesn't leak itself is almost a token guarantee.
-
-I can also guarantee that it's safe to throw a C++ exception out of the custom playback handler, provided that the library is ABI compatible with the executable it is being linked against, or at the very least, that the exception can safely pass through it without causing a fuss (Reprodyne won't consume your exceptions).
-
-\*Unless I have a bad day or something
-
-## Reference Documentation and Getting Help.
+# Reference Documentation and Getting Help.
 
 For reference, the reprodyne.h header documents all of the interface calls and is a short read. If you have any questions after that, in lieu of emailing me, please consider opening it as a bug in the tracker so that others with your question can benefit from the answer.
 
