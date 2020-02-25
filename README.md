@@ -117,7 +117,7 @@ Errors are likewise the same for validators but they will additionally raise a p
 
 Currently, validators can validate strings and hashes of bitmaps.
 
-## Learn by Example
+# Learn by Example
 
 There are two classes of functions in Reprodyne. Functions intended to be called by the test administration code, and functions intended to be called within the code under test.
 
@@ -213,15 +213,13 @@ Reprodyne will not catch any user exceptions from that handler and the code path
 
 If you run into issues with C++ exceptions, I'd recommend just using setjmp/longjmp if you must retrieve control in this way.
 
-## Reprodyne is no Testing Panacea
+# Reprodyne is no Testing Panacea
 
 One of the great difficulties with Reprodyne is the fact that it will necessarily make your code less flexible and more tightly coupled (Of course, show me an automated testing method that doesn't).
 
-One example of a test failure would be if you manage to remove extraneous iterations from your main loop, which will invalidate the playback data.
+One example of a false positive test failure would be if you manage to remove extraneous iterations from your main loop, invalidating the playback data.
 
-The only way to alieviate these problems it to just be smart in how you use Reprodyne, which unfortunately is something I cannot teach you.
-
-I've tried to make it as flexible as possible and in the future with more experience using it, I hope to make it more so. For now at least, I feel as though the benefits of Reprodyne outweigh these concerns.
+I've tried to make it as flexible as possible and in the future with more experience using it, I hope to make it more so. For now at least, I feel as though the benefits of Reprodyne already outweigh these concerns in certain situations.
 
 
 # Reference Documentation and Getting Help.
