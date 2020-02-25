@@ -49,10 +49,6 @@ Which will of course prefix the install path as such:
     THE-DIRECTORY-YOU-WANT/usr/local/lib
     THE-DIRECTORY-YOU-WANT/usr/local/include
 
-Or you can specify the lib/include paths directly:
-
-    IRIS YOU GOTTA ADD THIS TO THE CMAKE FILE
-
 ---
 **Note**: If you want to explore the code for the library itself, you will probably want to build it first as the source calls generated header code and your tools might get mad at you if it doesn't exist yet.
 
@@ -67,7 +63,9 @@ Simply run the "reprodyne_tests" executable located in the build directory:
 ---
 ### CMake Examples
 
-    find_package(reprodyne 1.0 REQUIRED)
+    #Exact match for major version 1, and minimum minor/patch verion 0
+    find_package(reprodyne 1.0.0 REQUIRED)
+
     target_link_library(YOUR-TARGET reprodyne)
 
 If it is found then the include director(ies) will be in REPRODYNE_INCLUDE_DIRS:
@@ -97,7 +95,7 @@ If you're not using CMake do whatever you have to do to point your non-CMake pea
 
 As far as I can see, there are two ways to use Reprodyne. You can either integrate the interceptors and validators directly into your codebase (Which has first-class support, that is why the macros can compile into no-ops), or you can write mocks that use them behind the scenes. I will not dictate what the "correct" approach is, as this is a decision best left to the particular developer(s) of a given project.
 
-Reprodyne itself is quite simple, but you must first understand the theory behind it, as it is designed around some not-so-obvious-at-first-glance problems.
+Reprodyne itself is quite simple, but you must first understand the theory behind it, as it is designed around issues that are not so obvious at first glance.
 
 
 ## Scopes, Frames and Subscope keys OH MAI!
