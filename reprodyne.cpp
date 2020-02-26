@@ -129,21 +129,21 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read()
     });
 }
 
-void reprodyne_do_not_call_this_function_directly_open_scope(void* ptr)
-{
-    safeBlock<void>([&]
-    {
-        if(recorder)    recorder->openScope(ptr);
-        else if(player)   player->openScope(ptr);
-    });
-}
-
 void reprodyne_do_not_call_this_function_directly_mark_frame()
 {
     safeBlock<void>([&]
     {
         if(recorder)    recorder->markFrame();
         else if(player)   player->markFrame();
+    });
+}
+
+void reprodyne_do_not_call_this_function_directly_open_scope(void* ptr)
+{
+    safeBlock<void>([&]
+    {
+        if(recorder)    recorder->openScope(ptr);
+        else if(player)   player->openScope(ptr);
     });
 }
 

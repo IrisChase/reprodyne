@@ -82,11 +82,10 @@ With or without CMake, you should be including reprodyne as such:
 
 If you're not using CMake do whatever you have to do to point your non-CMake peasant-build system to the directory containing this header.
 
-# Usage/Theory
+# How it Works/Theory
 
 As far as I can see, there are two ways to use Reprodyne. You can either integrate the interceptors and validators directly into your codebase (Which has first-class support, that is why the macros can compile into no-ops), or you can write mocks that use them behind the scenes. I will not dictate what the "correct" approach is, as this is a decision best left to the particular developer(s) of a given project.
 
-Reprodyne itself is quite simple, but you must first understand the theory behind it, as it is designed around issues that are not so obvious at first glance.
 
 
 ## Scopes, Frames and Subscope keys OH MAI!
@@ -215,14 +214,16 @@ If you run into issues with C++ exceptions, I'd recommend just using setjmp/long
 
 # Reprodyne is no Testing Panacea
 
-One of the great difficulties with Reprodyne is the fact that it will necessarily make your code less flexible and more tightly coupled (Of course, show me an automated testing method that doesn't).
+Reprodyne is not a replacement for traditional testing, it's an alternative method for when it makes sense to do things differently.
 
-One example of a false positive test failure would be if you manage to remove extraneous iterations from your main loop, invalidating the playback data.
+If you don't play your cards right, it can be very easy to break your tests without invalidating your code. Although... That happens with traditional testing as well, just perhaps not as easily.
+
+An example of a false positive test failure would be if you manage to remove extraneous iterations from your main loop, invalidating the playback data. Even for a single frame this will invalidate everything. The closer you can map your calls to Reprodyne to the semantic, unchangeable meaning of your operations, the better. But this isn't necessarily easy.
 
 I've tried to make it as flexible as possible and in the future with more experience using it, I hope to make it more so. For now at least, I feel as though the benefits of Reprodyne already outweigh these concerns in certain situations.
 
 
-# Reference Documentation and Getting Help.
+# Reference Documentation and Getting Help
 
 For reference, the reprodyne.h header documents all of the interface calls and is a short read. If you have any questions after that, in lieu of emailing me, please consider opening it as a bug in the tracker so that others with your question can benefit from the answer.
 

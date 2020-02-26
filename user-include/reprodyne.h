@@ -16,32 +16,50 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 //If you believe lower case macros are evil... I'm sorry.
 //I just... I can't yell this much...
 
+
+//Does what you'd expect, set the playback handler (Using the above function signature)
+// that will be called if there's anything fishy with the playback. May also be called
+// if something illegal happens in record mode.
 #define reprodyne_set_playback_failure_handler(handler) \
     reprodyne_do_not_call_this_function_directly_set_playback_failure_handler(handler)
 
+//Called to initialize recording.
 #define reprodyne_record() reprodyne_do_not_call_this_function_directly_record()
+
+//Save recording to path.
 #define reprodyne_save(path) reprodyne_do_not_call_this_function_directly_save(path)
+
+//Called to initialize playback.
 #define reprodyne_play(path) reprodyne_do_not_call_this_function_directly_play(path)
 
-#define reprodyne_assert_complete_read() reprodyne_do_not_call_this_function_directly_assert_complete_read()
-
-//If a pointer is reused*, then nothing of note happens.
-//It's fine don't worry about it. The Right Thing is done.
-//
-//(*that is, when a scope is deallocated and you're unfortunate
-//  enough that the pointer gets reassigned. If you call this more than
-//  once for the same object... Don't do that.)
-#define reprodyne_open_scope(scope) reprodyne_do_not_call_this_function_directly_open_scope(scope)
+//Mark a "frame", this must be called before any validator or interceptors. Suggested
+// to be called at the top of a main loop, if applicable. Otherwise once at the beginning of
+// the (presumably) short lived procedure.
 #define reprodyne_mark_frame() reprodyne_do_not_call_this_function_directly_mark_frame()
 
+//Open scope before use with interceptors or validators. A reused pointer will shadow it's
+// previous scope. Pointer reuse need not be deterministic (They can be reused in one run but not
+// another, for example), only the order of allocation, and what the pointer represents
+// at any given time is important.
+#define reprodyne_open_scope(scope) reprodyne_do_not_call_this_function_directly_open_scope(scope)
+
+//Intercept a double against the scope/key pair.
 #define reprodyne_intercept_indeterminate_double(scope, key, val) \
     reprodyne_do_not_call_this_function_directly_intercept_indeterminate_double(scope, key, val)
 
+//Validate a string against the scope/key pair.
 #define reprodyne_validate_string(scope, key, call) \
     reprodyne_do_not_call_this_function_directly_validate_string(scope, key, call)
 
+//Validate a bitmap against a scope/key pair by taking a hash.
+// NOTE: Width and stride represent the width of you data in *BYTES*
+//It's fine if the stride is the same size as the width, this should be useful for generic data.
 #define reprodyne_validate_bitmap_hash(scope, key, width, height, stride, bytes) \
     reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(scope, key, width, height, stride, bytes)
+
+//Make sure that the program didn't terminate early, and that all the validation
+// and indeterminate tapes have been read to completion. Only makes sense in playback mode.
+#define reprodyne_assert_complete_read() reprodyne_do_not_call_this_function_directly_assert_complete_read()
 
 
 /*-------------------------------Implementation junk beyond this point-------------------------------*/
@@ -56,8 +74,8 @@ void reprodyne_do_not_call_this_function_directly_save(const char* path);
 
 void reprodyne_do_not_call_this_function_directly_play(const char* path);
 
-void reprodyne_do_not_call_this_function_directly_open_scope(void* scope);
 void reprodyne_do_not_call_this_function_directly_mark_frame();
+void reprodyne_do_not_call_this_function_directly_open_scope(void* scope);
 
 double reprodyne_do_not_call_this_function_directly_intercept_indeterminate_double(void* scope,
                                                                                    const char* key,
