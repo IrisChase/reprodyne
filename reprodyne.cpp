@@ -165,7 +165,7 @@ double reprodyne_do_not_call_this_function_directly_read_indeterminate(void* sco
     });
 }
 
-double reprodyne_do_not_call_this_function_directly_intercept_indeterminate_double(void* scopePtr, const char* scopeKey, const double indeterminate)
+double reprodyne_do_not_call_this_function_directly_intercept_double(void* scopePtr, const char* scopeKey, const double indeterminate)
 {
     return safeBlock<double>([&]()
     {

@@ -44,8 +44,8 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 #define reprodyne_open_scope(scope) reprodyne_do_not_call_this_function_directly_open_scope(scope)
 
 //Intercept a double against the scope/key pair.
-#define reprodyne_intercept_indeterminate_double(scope, key, val) \
-    reprodyne_do_not_call_this_function_directly_intercept_indeterminate_double(scope, key, val)
+#define reprodyne_intercept_double(scope, key, val) \
+    reprodyne_do_not_call_this_function_directly_intercept_double(scope, key, val)
 
 //Validate a string against the scope/key pair.
 #define reprodyne_validate_string(scope, key, call) \
@@ -77,9 +77,9 @@ void reprodyne_do_not_call_this_function_directly_play(const char* path);
 void reprodyne_do_not_call_this_function_directly_mark_frame();
 void reprodyne_do_not_call_this_function_directly_open_scope(void* scope);
 
-double reprodyne_do_not_call_this_function_directly_intercept_indeterminate_double(void* scope,
-                                                                                   const char* key,
-                                                                                   double val);
+double reprodyne_do_not_call_this_function_directly_intercept_double(void* scope,
+                                                                     const char* key,
+                                                                     double val);
 
 void reprodyne_do_not_call_this_function_directly_validate_string(void* scope, const char* key, const char* cereal);
 
@@ -112,7 +112,7 @@ void reprodyne_do_not_call_this_function_directly_assert_complete_read();
 #define reprodyne_open_scope(scope) ((void)0)
 #define reprodyne_mark_frame() ((void)0)
 
-#define reprodyne_intercept_indeterminate_double(scope, key, val) val
+#define reprodyne_intercept_double(scope, key, val) val
 
 #define reprodyne_validate_string(scope, key, call) ((void)0)
 #define reprodyne_validate_bitmap_hash(scope, key, width, height, stride, bytes) ((void)0)
