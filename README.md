@@ -110,9 +110,9 @@ Care must be taken to ensure that you intercept all *true* indeterminate values.
 
 If anything is amiss with the number of calls to a given scope, or there is a difference in frame ID or the like, then a playback error will be raised.
 
-Validators are just like interceptors, but they return nothing, and so in playback mode they attempt to compare the provided value against the stored one.
+Validators are just like interceptors, but they return nothing, and in playback mode they attempt to compare the provided value against the stored one.
 
-Errors are likewise the same for validators but they will additionally raise a playback error if the stored value is different than the provided one.
+Errors are likewise the same for validators but they will additionally raise a playback error if the stored value is different from the provided one.
 
 Currently, validators can validate strings and hashes of bitmaps.
 
