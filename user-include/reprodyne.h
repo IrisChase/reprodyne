@@ -13,10 +13,6 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 
 #ifdef REPRODYNE_AVAILABLE
 
-//If you believe lower case macros are evil... I'm sorry.
-//I just... I can't yell this much...
-
-
 //Does what you'd expect, set the playback handler (Using the above function signature)
 // that will be called if there's anything fishy with the playback. May also be called
 // if something illegal happens in record mode.
@@ -61,6 +57,9 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 // and indeterminate tapes have been read to completion. Only makes sense in playback mode.
 #define reprodyne_assert_complete_read() reprodyne_do_not_call_this_function_directly_assert_complete_read()
 
+
+//If you believe lower case macros are evil... I'm sorry.
+//I just... I can't yell this much...
 
 /*-------------------------------Implementation junk beyond this point-------------------------------*/
 #ifdef __cplusplus
