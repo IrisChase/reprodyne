@@ -18,7 +18,7 @@ std::vector<double> generateList()
     return std::initializer_list<double>({time(), time(), time(), time()});
 }
 
-TEST_CASE("woof")
+TEST_CASE("Big ugly test group")
 {
     reprodyne_record();
     reprodyne_mark_frame();
@@ -69,8 +69,6 @@ TEST_CASE("woof")
         int rescope2;
         int rescope1;
 
-        //The actual addresses are in the opposite order now, but
-        // as long as they are registered to reprodyne in the same order, it's fine.
         reprodyne_open_scope(&rescope1);
         reprodyne_open_scope(&rescope2);
 
@@ -97,20 +95,20 @@ TEST_CASE("woof")
 
         /*MARK FRAME MISSING*/
 
-        bool success = false;
-
         try
         {
             interceptHelper(&scope2, "the-wan", originalSetScope2, {});
             FAIL("Intercept didn't fail with mismatched frame calls");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             REQUIRE(oops.code == REPRODYNE_STAT_FRAME_MISMATCH);
-            success = true;
+            SUCCEED();
         }
 
-        REQUIRE(success); //, failure is NOT an option.
+        //TODO: This is the only test that gets this part right...
+        // But there should be a catch(...) block to fail it.
+        FAIL("Reprodyne didn't throw raise playback error");
     }
     SECTION("Read past the end")
     {
@@ -124,7 +122,7 @@ TEST_CASE("woof")
             interceptHelper(&scope1, "the-wan", originalSetScope1, {});
             FAIL("Read past end didn't fail correctly");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             REQUIRE(oops.code == REPRODYNE_STAT_TAPE_PAST_END);
         }
@@ -143,7 +141,7 @@ TEST_CASE("woof")
             reprodyne_validate_string(&scope2, "the-wan", "wrongo");
             FAIL("Mismatched Call not detected.");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             //Check da oophs code
             REQUIRE(oops.code == REPRODYNE_STAT_VALIDATION_FAIL);
@@ -162,7 +160,7 @@ TEST_CASE("woof")
             reprodyne_assert_complete_read();
             FAIL("Reprodyne should have aborted on incomplete program read.");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             REQUIRE(oops.code == REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ);
         }
@@ -183,7 +181,7 @@ TEST_CASE("woof")
             reprodyne_assert_complete_read();
             FAIL("Reprodyne should have aborted on incomplete call read.");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             REQUIRE(oops.code == REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ);
         }
@@ -247,7 +245,7 @@ TEST_CASE("Scope override")
             reprodyne_assert_complete_read();
             FAIL("Reprodyne should have aborted on incomplete indeterminate read.");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             REQUIRE(oops.code == REPRODYNE_STAT_PROG_TAPE_INCOMPLETE_READ);
         }
@@ -265,7 +263,7 @@ TEST_CASE("Invalid scope key")
     reprodyne_save(testDataPath);
     reprodyne_play(testDataPath);
 
-    //TODO: make a test for this without these two lines. Whatever condition that is... Too busy to think r/n
+    //TODO: make a test for this without these two lines? Whatever condition that is... Too busy to think r/n
     reprodyne_mark_frame();
     reprodyne_open_scope(&scope);
 
@@ -276,7 +274,7 @@ TEST_CASE("Invalid scope key")
         reprodyne_intercept_double(&scope, "notta", 42);
         FAIL("Intercept with bad key in playback mode didn't fail");
     }
-    catch(const OopsieWhoopsie oops)
+    catch(const OopsieWhoopsie& oops)
     {
         REQUIRE(oops.code == REPRODYNE_STAT_EMPTY_TAPE);
     }
@@ -349,7 +347,7 @@ TEST_CASE("Graceful handling of saved file with no entries")
         reprodyne_mark_frame();
         reprodyne_intercept_double(&up, "fdsfd", 34243);
     }
-    catch(const OopsieWhoopsie oops)
+    catch(const OopsieWhoopsie& oops)
     {
         //This is really all we can get to I think...
         REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
@@ -374,7 +372,7 @@ TEST_CASE("Unregistered scope")
             reprodyne_intercept_double(&up, "fj", 43);
             FAIL("Unregistered scope accepted in indeterminate write");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
         }
@@ -386,7 +384,7 @@ TEST_CASE("Unregistered scope")
             reprodyne_validate_string(&up, "fjfjfjasdfdas", "CEREAL");
             FAIL("Unregistered scope accepted in serialize write");
         }
-        catch(const OopsieWhoopsie oops)
+        catch(const OopsieWhoopsie& oops)
         {
             REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
         }
@@ -404,7 +402,7 @@ TEST_CASE("Unregistered scope")
                 reprodyne_intercept_double(&up, "bep", 3);
                 FAIL("Unregistered scope accepted in indeterminate read");
             }
-            catch(const OopsieWhoopsie oops)
+            catch(const OopsieWhoopsie& oops)
             {
                 REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
             }
@@ -416,7 +414,7 @@ TEST_CASE("Unregistered scope")
                 reprodyne_validate_string(&up, "bep", "");
                 FAIL("Unregistered scope accepted for serialize read");
             }
-            catch(const OopsieWhoopsie oops)
+            catch(const OopsieWhoopsie& oops)
             {
                 REQUIRE(oops.code == REPRODYNE_STAT_UNREGISTERED_SCOPE);
             }

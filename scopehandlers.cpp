@@ -135,7 +135,7 @@ void ScopeHandlerPlayer::assertCompletReed() //I'm, bored okay?
                 throw PlaybackError(REPRODYNE_STAT_CALL_TAPE_INCOMPLETE_READ, generateErrorMsg("Video hash"));
         };
 
-        if(readPosIterator == readPosMap.end()) assertEntry(LastReadPos()); //0 0 because we haven't read anything, obvs
+        if(readPosIterator == readPosMap.end()) assertEntry(LastReadPos()); //Empty read pos because we haven't read anything, obvs
         else assertEntry(readPosIterator->second);
     }
 }

@@ -8,14 +8,12 @@
 namespace reprodyne
 {
 
-
-
 void ProgramRecorder::save(const char* path)
 {
     {
         auto ordinalScopes = scopes.pop();
 
-        //TODO move to ScopeRecorder?
+        //TODO: move to ScopeRecorder?
         std::vector<flatbuffers::Offset<reprodyne::OrdinalScopeTapeEntry>> builtOrdinalEntries;
         for(auto keyedScopeHandler : ordinalScopes)
             builtOrdinalEntries.push_back(keyedScopeHandler.buildOrdinalScopeFlatbuffer(builder));
@@ -69,11 +67,9 @@ ProgramPlayer::ProgramPlayer(const char* path)
 
     if(stat == Z_MEM_ERROR) throw std::runtime_error("Not enough memory for zlib.");
     if(stat == Z_BUF_ERROR) throw std::runtime_error("Data corrupt or incomplete.");
-    if(stat != Z_OK) throw std::runtime_error("Some unknown error occurred during decompression.");
+    if(stat != Z_OK)        throw std::runtime_error("Some unknown error occurred during decompression.");
 
     scopes.load(reprodyne::GetTapeContainer(&loadedBuffer[0])->ordinalScopeTape());
 }
-
-
 
 }//reprodyne

@@ -114,7 +114,7 @@ Validators are just like interceptors, but they return nothing, and in playback 
 
 Errors are likewise the same for validators but they will additionally raise a playback error if the stored value is different from the provided one.
 
-Currently, validators can validate strings and hashes of bitmaps.
+Currently, interceptors can intercept doubles and validators can validate strings and hashes of bitmaps. This will be extended in the future.
 
 # Learn by Example
 
@@ -145,6 +145,7 @@ Your code under test might look something like this:
         }
     }
 
+---
 
 There are four states this code could be under when executed:
 
@@ -171,7 +172,9 @@ For record mode, you probably want a custom executable for generating the test d
         return 0;
     }
 
-It is customary to name the file ".rep", but is not required, Reprodyne is able to recognize one of it's own.
+**NOTE:** The file extension is somewhat arbitrary, Reprodyne is able to recognize one of it's own.
+
+---
 
 Then to execute the test:
 
@@ -183,6 +186,8 @@ Then to execute the test:
 
         reprodyne_assert_complete_read(); //Make sure the process didn't exit early.
     }
+
+---
 
 ### Making Reprodyne Available to Your Code
 

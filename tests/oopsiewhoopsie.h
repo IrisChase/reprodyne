@@ -3,6 +3,9 @@
 #include <chrono>
 #include <exception>
 
+//Common test code, no namespace because it's just for testing and not for
+// the library itself.
+
 class OopsieWhoopsie : public std::exception
 {
 public:

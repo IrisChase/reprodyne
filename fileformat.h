@@ -59,9 +59,8 @@ inline void writeSignature(unsigned char* fileStart)
 
 inline bool checkSignature(unsigned char* fileStart)
 {
-    const std::string savedSignature =  std::string(reinterpret_cast<char*>(fileStart), signatureSize);
-    const auto mySignature = std::string(&fileSignature[0], signatureSize);
-    return savedSignature == mySignature;
+    return std::string(reinterpret_cast<char*>(fileStart), signatureSize)
+        == std::string(&fileSignature[0], signatureSize);
 }
 
 inline uint64_t readUncompressedSize(unsigned char* fileStart)
@@ -77,6 +76,5 @@ inline void writeBoringStuffToReservedRegion(unsigned char* filesStart, const ui
 }
 
 }//FileFormat
-
 }//reprodyne
 

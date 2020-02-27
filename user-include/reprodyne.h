@@ -13,7 +13,7 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 
 #ifdef REPRODYNE_AVAILABLE
 
-//Does what you'd expect, set the playback handler (Using the above function signature)
+//Set the playback handler (Using the above function signature)
 // that will be called if there's anything fishy with the playback. May also be called
 // if something illegal happens in record mode.
 #define reprodyne_set_playback_failure_handler(handler) \
@@ -30,13 +30,13 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 
 //Mark a "frame", this must be called before any validator or interceptors. Suggested
 // to be called at the top of a main loop, if applicable. Otherwise once at the beginning of
-// the (presumably) short lived procedure.
+// the procedure.
 #define reprodyne_mark_frame() reprodyne_do_not_call_this_function_directly_mark_frame()
 
-//Open scope before use with interceptors or validators. A reused pointer will shadow it's
-// previous scope. Pointer reuse need not be deterministic (They can be reused in one run but not
-// another, for example), only the order of allocation, and what the pointer represents
-// at any given time is important.
+//Register a scope. Must be done before using said scope in interceptors or validators.
+//A reused pointer will shadow it's previous scope. Pointer reuse need not be deterministic
+// (They can be reused in one run but not another, for example), only the order of allocation,
+// and what the pointer represents at any given time is important.
 #define reprodyne_open_scope(scope) reprodyne_do_not_call_this_function_directly_open_scope(scope)
 
 //Intercept a double against the scope/key pair.
@@ -50,6 +50,7 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 //Validate a bitmap against a scope/key pair by taking a hash.
 // NOTE: Width and stride represent the width of you data in *BYTES*
 //It's fine if the stride is the same size as the width, this should be useful for generic data.
+//The data in the padded region is ignored.
 #define reprodyne_validate_bitmap_hash(scope, key, width, height, stride, bytes) \
     reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(scope, key, width, height, stride, bytes)
 
@@ -60,7 +61,6 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 
 //If you believe lower case macros are evil... I'm sorry.
 //I just... I can't yell this much...
-
 /*-------------------------------Implementation junk beyond this point-------------------------------*/
 #ifdef __cplusplus
 extern "C" {

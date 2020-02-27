@@ -43,6 +43,9 @@ Bitmap generateBitmap(const int width, const int height)
     Bitmap b = {std::vector<unsigned char>(width * height), width, width, height};
     for(auto& byte : b.data) byte = time(); //Random enough for gooberment wonk.
 
+    //TODO: Honestly, this probably shouldn't be random. You want validation tests to be
+    // deterministic. Random data belongs in fuzz testing...
+
     return b;
 }
 
@@ -75,11 +78,9 @@ void validateHelper(Bitmap& bitbap, const char* key = basicKey)
                 ++oit;
             }
         };
+
+        //TODO: Uh... There's no call...
     }
-
-
-    //Randomize stride area?
-    // (ehh, that should be in a fuzz test...)
 
     reprodyne_validate_bitmap_hash(nullptr,
                                    key,
@@ -113,7 +114,7 @@ TEST_CASE("Standard video validation")
         readyPlay();
         validateHelper(bitmap1);
         reprodyne_assert_complete_read();
-        SUCCEED(); //SUCC SEED
+        SUCCEED();
     }
     SECTION("Three identical frames")
     {
@@ -137,7 +138,7 @@ TEST_CASE("Standard video validation")
         validateHelper(bitmap2);
         validateHelper(bitmap3);
         reprodyne_assert_complete_read();
-        SUCCEED();
+        SUCCEED(); //SUCC SEED
     }
     SECTION("Variable input frame dimensions")
     {
@@ -173,8 +174,8 @@ TEST_CASE("Video frame failure conditions")
         });
     };
 
-    //TODO: test bad dimensions... But this is a runtime error soooooooo
-
+    //TODO: test bad dimensions... But results in a runtime error and it harder to test
+    //      FIX: Define a playback error code for it so that it can be tested easily?
 
     SECTION("Playback mode")
     {
