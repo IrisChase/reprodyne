@@ -51,7 +51,6 @@ Simply run the "reprodyne_tests" executable located in the build directory:
     ./reprodyne_tests
 
 ## Including Reprodyne in Your Projects
----
 ### CMake Examples
 
     #Exact match for major version 1, and minimum minor/patch verion 0
@@ -230,7 +229,7 @@ I've tried to make it as flexible as possible and in the future with more experi
 
 # Reference Documentation and Getting Help
 
-For reference, the reprodyne.h header documents all of the interface calls and is a short read. If you have any questions after that, in lieu of emailing me, please consider opening it as a bug in the tracker so that others with your question can benefit from the answer.
+For reference, the reprodyne.h header documents all of the interface calls and is a short read. If you have any questions after that, in lieu of emailing me, please consider opening it as a question in the issue tracker so that others with your question can benefit from the answer.
 
 
 # Contributing
