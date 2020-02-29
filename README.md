@@ -87,7 +87,7 @@ As far as I can see, there are two ways to use Reprodyne. You can either integra
 
 
 
-## Scopes, Frames and Subscope keys OH MAI!
+## Scopes, Frames and Subscope Keys OH MAI!
 
 Data in Reprodyne is aligned by the combination of the the current *frame*, *scope*, and *subscope*.
 
