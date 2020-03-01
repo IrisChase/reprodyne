@@ -233,7 +233,9 @@ For reference, the reprodyne.h header documents all of the interface calls and i
 
 
 # Contributing
-Contributions are welcome, but I would prefer it if you contacted me (iris@enesda.com) before beginning work on anything non-trivial. I would hate for you to waste effort on something I can't pull because it's not how I want to proceed.
+Contributions are welcome, but please open an issue with the "Proposal" label in the issue tracker to begin discussion before beginning work on anything non-trivial. I would hate for you to waste effort on something I can't pull because it's not how I want to proceed.
+
+Alternatively, you can contact me directly (iris@enesda.com) and I'll manage the issue for you.
 
 # Credits
 Created and developed by Iris Chase (iris@enesda.com)
