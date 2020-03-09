@@ -36,7 +36,7 @@ typedef void(*reprodyne_playback_failure_handler)(const int code, const char* ms
 //Called to initialize recording.
 #define reprodyne_record() reprodyne_do_not_call_this_function_directly_record()
 
-//Save recording to path.
+//Save recording to path. File extension doesn't matter.
 #define reprodyne_save(path) reprodyne_do_not_call_this_function_directly_save(path)
 
 //Called to initialize playback.
