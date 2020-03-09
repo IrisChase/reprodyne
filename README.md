@@ -1,7 +1,7 @@
 # Reprodyne
 Reprodyne is an Apache 2 licensed C/C++ library for automating manual tests.
 
-Generally speaking, real world data is both easier and faster to generate, and more interesting to test against, than artificial test conditions written in sterile environments. Reproducibility, however, is limited. Reprodyne solves this problem by "recording" manual tests to later be played back automatically.
+Generally speaking, real world data is both easier and faster to generate, and more interesting to test against, than artificial test conditions written in sterile environments. Reproducibility, however, is limited. Reprodyne attempts to solve this problem by "recording" manual tests to later be played back automatically.
 
 Reprodyne is not meant to *replace* existing test frameworks, but rather to augment their capabilities. It should be possible, at least in theory, to integrate it with any test framework.
 
@@ -79,7 +79,7 @@ With or without CMake, you should be including reprodyne as such:
 
     <reprodyne.h>
 
-If you're not using CMake do whatever you have to do to point your non-CMake peasant-build system to the directory containing this header.
+If you're not using CMake do whatever you have to do to point your non-CMake peasant-build system to the directory containing the appropriate version of this header.
 
 # How it Works/Theory
 
@@ -87,7 +87,7 @@ As far as I can see, there are two ways to use Reprodyne. You can either integra
 
 
 
-## Scopes, Frames and Subscope Keys OH MAI!
+## Scopes, Frames and Subscope Keys oh my!
 
 Data in Reprodyne is aligned by the combination of the the current *frame*, *scope*, and *subscope*.
 
@@ -229,7 +229,7 @@ I've tried to make it as flexible as possible and in the future with more experi
 
 # Reference Documentation and Getting Help
 
-For reference, the reprodyne.h header documents all of the interface calls and is a short read. If you have any questions after that, in lieu of emailing me, please consider opening it as a question in the issue tracker so that others with your question can benefit from the answer.
+For reference, the reprodyne.h header documents all of the interface calls and is a short read. If you have any questions after that, feel free to open an issue in the tracker with the "question" label.
 
 
 # Contributing
