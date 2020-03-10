@@ -166,7 +166,7 @@ For record mode, you probably want a custom executable for generating the test d
 
         processSomething();
 
-        reprodyne_save("PATH-TO-SAVE-TEST-DATA.rep");
+        reprodyne_save("PATH-TO-SAVE-TEST-DATA.x3th");
 
         return 0;
     }
