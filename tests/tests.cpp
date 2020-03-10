@@ -119,10 +119,6 @@ TEST_CASE("Big ugly test group")
             REQUIRE(oops.code == REPRODYNE_STAT_FRAME_MISMATCH);
             SUCCEED();
         }
-
-        //TODO: This is the only test that gets this part right...
-        // But there should be a catch(...) block to fail it.
-        FAIL("Reprodyne didn't throw raise playback error");
     }
     SECTION("Read past the end")
     {
