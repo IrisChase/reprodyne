@@ -234,9 +234,9 @@ void reprodyne_do_not_call_this_function_directly_validate_bitmap_hash(void* sco
         std::vector<unsigned char> clippedImageRegion;
         clippedImageRegion.reserve(width * height);
 
-        for(int i = 0; i != height; ++i)
+        for(int h = 0; h != height; ++h)
             for(int w = 0; w != width; ++w)
-                clippedImageRegion.push_back(reinterpret_cast<unsigned char*>(bytes)[height * stride + w]);
+                clippedImageRegion.push_back(reinterpret_cast<unsigned char*>(bytes)[h * stride + w]);
 
         SHA256(&clippedImageRegion[0], clippedImageRegion.size(), reinterpret_cast<unsigned char*>(&hash[0]));
 

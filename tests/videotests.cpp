@@ -171,6 +171,26 @@ TEST_CASE("Standard video validation")
         reprodyne_assert_complete_read();
         SUCCEED();
     }
+    SECTION("Padded area changed")
+    {
+        auto bitmapWithStride = bitmap1;
+        bitmapWithStride.width -= 10;
+
+        auto bitmapWidthDiffStride = bitmapWithStride;
+
+        //Change stride value for each row
+        for(int h = 0; h != bitmapWidthDiffStride.height; ++h)
+        {
+            //Not = time() because it needs to be DIFFERENT, not random...
+            bitmapWidthDiffStride.data[h * bitmapWidthDiffStride.stride + bitmapWidthDiffStride.width]++;
+        }
+
+        validateHelper(bitmapWithStride);
+        readyPlay();
+        validateHelper(bitmapWidthDiffStride);
+        reprodyne_assert_complete_read();
+        SUCCEED();
+    }
 }
 
 
