@@ -9,7 +9,7 @@ From a high level, Reprodyne works by transforming non-deterministic funtions in
 
 The Reprodyne API is defined entirely as a set of preprocessor macros, so that once you're done testing, they gracefully expand into no-ops and there is no longer a need to link against the library.
 
-![](demo.gif)
+![Demo gif of Reprodyne](demo.gif)
 
 # Build/Install
 #### Required toolchain:
