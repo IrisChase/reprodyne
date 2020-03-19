@@ -242,7 +242,7 @@ Alternatively, you can contact me directly (iris@enesda.com) and I'll manage the
 # Credits
 Created and developed by Iris Chase (iris@enesda.com)
 
-Reprodyne was originally developed for use in end-to-end testing of a GUI framework. I present it here for anyone whom it may benefit~
+Reprodyne was originally developed for use in end-to-end testing of [a GUI framework](https://github.com/IrisChase/IVD). I present it here for anyone whom it may benefit~
 
 # License
 Reprodyne is licensed under the Apache 2.0 license.
